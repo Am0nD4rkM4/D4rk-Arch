@@ -2,7 +2,7 @@
 # Arch Linux + i3. Mod = Alt (cámbialo a Mod4/Super si prefieres, ver abajo)
 # Espacios: 1 Monitor a pantalla completa · 2 Terminales · 3 Web · 4 InfoForge · 5 Archivos
 # El monitor vive en el espacio 1, a pantalla completa (Alt+1 o Alt+M para verlo)
-# Fondo de pantalla con nitrogen (en Arch sí existe en el repo extra).
+# Fondo de pantalla con feh.
 # Mod = $mod
 set $mod Mod1
 set $term alacritty
@@ -161,10 +161,7 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 
 # Arranque
 exec --no-startup-id picom --config ~/.config/picom/picom.conf
-exec --no-startup-id nitrogen --restore 2>/dev/null || true
-# Fondo con feh en vez de nitrogen: descomenta la línea siguiente y
-# pon el nombre exacto de tu foto (también vale .png):
-# exec --no-startup-id feh --bg-fill ~/Imágenes/tu-foto.png
+exec --no-startup-id feh --bg-fill ~/Imágenes/tu-foto.png 2>/dev/null || true
 exec --no-startup-id nm-applet 2>/dev/null || true
 exec --no-startup-id /usr/bin/lxqt-policykit-agent 2>/dev/null || true
 # Escritorio monitor al arrancar: espacio 1 a pantalla completa

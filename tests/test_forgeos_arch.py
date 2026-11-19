@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Pruebas de ForgeOS para Arch.
 # Comprueban que los archivos existen, que los scripts pasan bash -n,
-# que la config de i3 usa nitrogen y no menciona apt, y que los scripts
+# que la config de i3 pone el fondo con feh y no menciona apt, y que los scripts
 # son ejecutables. No instalan nada ni tocan el sistema.
 # Uso: python3 tests/test_forgeos_arch.py
 import os
@@ -69,10 +69,13 @@ def main():
         completo = os.path.join(RAIZ, ruta)
         comprobar(f"ejecutable {ruta}", os.access(completo, os.X_OK))
 
-    # 4. La config de i3 usa nitrogen (en Arch sí existe) y Mod = Alt.
+    # 4. La config de i3 pone el fondo con feh (nitrogen y neofetch ya no
+    # están en los repos oficiales de Arch) y Mod = Alt.
     config_i3 = leer(os.path.join(RAIZ, "config/i3/config"))
-    comprobar("config i3 usa nitrogen --restore",
-              "nitrogen --restore" in config_i3)
+    comprobar("config i3 pone el fondo con feh --bg-fill",
+              "feh --bg-fill" in config_i3)
+    comprobar("config i3 no usa nitrogen",
+              "nitrogen" not in config_i3)
     comprobar("config i3 Mod = Alt (Mod1)", "set $mod Mod1" in config_i3)
     comprobar("config i3 tiene el monitor en el espacio 1",
               "forgeos-monitor" in config_i3)
@@ -88,8 +91,8 @@ def main():
               and "flameshot full" in config_i3)
     comprobar("config i3 tiene atajo Alt+O para datos del sistema",
               "$mod+o" in config_i3 and "forgeos-sysinfo" in config_i3)
-    comprobar("config i3 tiene la alternativa feh comentada",
-              "feh --bg-fill" in config_i3)
+    comprobar("config i3 pone el fondo con feh (tu foto)",
+              "feh --bg-fill ~/Imágenes/tu-foto.png" in config_i3)
     comprobar("config i3 tema verde hacker (#00ff41)",
               "#00ff41" in config_i3)
     comprobar("config i3 fondo negro",
@@ -110,8 +113,8 @@ def main():
     # 6. El instalador instala los paquetes clave de Arch (nombres
     # verificados en archlinux.org/packages).
     for paquete in ["i3-wm", "i3status", "i3lock", "rofi", "picom",
-                    "feh", "nitrogen", "alacritty", "btop", "htop",
-                    "neofetch", "xorg-xrandr", "networkmanager",
+                    "feh", "alacritty", "btop", "htop",
+                    "fastfetch", "xorg-xrandr", "networkmanager",
                     "network-manager-applet", "flameshot", "blueman",
                     "pavucontrol", "pipewire", "pipewire-pulse",
                     "wireplumber", "git", "base-devel",

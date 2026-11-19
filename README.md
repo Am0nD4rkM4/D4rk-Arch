@@ -59,7 +59,7 @@ Prueba en seco, sin instalar nada:
 sudo bash install-arch.sh --dry-run
 ```
 
-El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, nitrogen, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3), endurece la seguridad (paso 7/7, ver abajo) e intenta clonar InfoForge **y Server-C** (tu servidor de laboratorio en C, en `~/Server-C`, para probarlo en local con `nmap`, `nc` y Metasploit desde la misma laptop).
+El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3), endurece la seguridad (paso 7/7, ver abajo) e intenta clonar InfoForge **y Server-C** (tu servidor de laboratorio en C, en `~/Server-C`, para probarlo en local con `nmap`, `nc` y Metasploit desde la misma laptop).
 
 Para saltarte la seguridad:
 
@@ -131,17 +131,13 @@ Con dos pantallas (laptop + monitor externo), al arrancar el espacio 1 con el mo
 
 ## Fondo de pantalla
 
-En Arch `nitrogen` **sí existe** (repo extra), así que no pasa lo de Kali:
-
-```bash
-nitrogen
-```
-
-Elige tu foto y nitrogen la guarda para el próximo arranque (`nitrogen --restore` ya está en la config de i3). Con `feh` también vale:
+En Arch `nitrogen` **ya no existe** (lo quitaron de los repos oficiales, igual que `neofetch`), así que el fondo va con `feh`, como en Kali:
 
 ```bash
 feh --bg-fill ~/Imágenes/tu-foto.png
 ```
+
+Esa línea ya está en la config de i3, así que el fondo se pone solo al entrar. Si cambias de foto, corre ese comando con el nombre nuevo.
 
 ## Tus herramientas de Kali en Arch
 
@@ -202,7 +198,7 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 
 ## Qué lleva preinstalado
 
-- **Escritorio:** i3, i3status, i3lock, rofi, picom, nitrogen, feh, LightDM
+- **Escritorio:** i3, i3status, i3lock, rofi, picom, feh, LightDM
 - **Monitor:** btop, fastfetch, `forgeos-monitor`, `forgeos-sysinfo`
 - **Terminal:** Alacritty (JetBrains Mono), verde `#00ff41` sobre negro, translúcida (opacity 0.80), tmux
 - **Sistema:** htop, btop, NetworkManager, Bluetooth, PipeWire, brightnessctl
@@ -248,7 +244,7 @@ sudo bash install-arch.sh --dry-run
 - **Gestor de paquetes:** `pacman` en vez de `apt`. No hay `apt-get`, `dpkg` ni paquetes `.deb`.
 - **Nombres de paquete:** `i3-wm` (no `i3`), `network-manager-applet` (no `network-manager-gnome`), `bind-tools` (no `dnsutils`), `openbsd-netcat` (no `netcat`), `xorg-xrandr` (no `x11-xserver-utils`).
 - **Sonido:** en Arch no hay un paquete `pipewire-audio` como en Debian: se instalan `pipewire`, `pipewire-pulse`, `pipewire-alsa` y `wireplumber` por separado.
-- **nitrogen sí existe** en Arch (repo extra), así que el fondo funciona sin el apaño de Kali.
+- **El fondo va con `feh`**, porque `nitrogen` ya no está en los repos oficiales de Arch.
 - **i3-wm 4.25 ya trae los gaps dentro** (antes era el paquete aparte `i3-gaps`), así que la config de gaps funciona tal cual.
 - **Arch no tiene versiones fijas:** es rolling release, se actualiza con `pacman -Syu` cuando quieras, sin cambiar de versión como Debian 12 a 13.
 - **El login es LightDM**, igual que en Debian, y se elige la sesión i3 en el login.

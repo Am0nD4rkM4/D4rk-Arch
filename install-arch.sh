@@ -107,10 +107,12 @@ log "2/6 Instalando Xorg, LightDM, i3 y utilidades..."
 # = la pantalla de login, donde eliges la sesión i3. i3-wm = el escritorio
 # en mosaico (en Arch 4.25 ya trae los gaps dentro). i3status = la barra de
 # arriba. i3lock = bloquear pantalla. dmenu/rofi = lanzadores de programas.
-# picom = transparencias y sombras. nitrogen = fondo de pantalla (en Arch
-# sí existe, en el repo extra, a diferencia de Kali). feh = fondo alternativo.
+# picom = transparencias y sombras. feh = fondo de pantalla (nitrogen ya
+# no está en los repos oficiales de Arch: lo quitaron, como a neofetch).
 # alacritty = la terminal. tmux = varias terminales en una. htop/btop = ver
-# CPU y RAM. fastfetch/neofetch = datos del sistema. brightnessctl = brillo.
+# CPU y RAM. fastfetch = datos del sistema (neofetch ya no está en los
+# repos de Arch: su proyecto se archivó en 2024 y lo quitaron).
+# brightnessctl = brillo.
 # xorg-xrandr = detectar la segunda pantalla. networkmanager +
 # network-manager-applet = el Wi-Fi (nm-applet en la barra). blueman/bluez =
 # Bluetooth. pavucontrol = volumen. pipewire, pipewire-pulse, pipewire-alsa,
@@ -123,8 +125,8 @@ log "2/6 Instalando Xorg, LightDM, i3 y utilidades..."
 # algún día hace falta (no instala nada de AUR por defecto). git = clonar repos.
 run pacman -S --noconfirm --needed \
   xorg-server xorg-xinit lightdm lightdm-gtk-greeter \
-  i3-wm i3status i3lock dmenu rofi picom nitrogen feh \
-  alacritty tmux htop btop fastfetch neofetch brightnessctl \
+  i3-wm i3status i3lock dmenu rofi picom feh \
+  alacritty tmux htop btop fastfetch brightnessctl \
   xorg-xrandr networkmanager network-manager-applet \
   bluez bluez-utils blueman pavucontrol \
   pipewire pipewire-pulse pipewire-alsa wireplumber \
@@ -360,8 +362,8 @@ log "Listo."
 echo "Ahora: cierra sesión, en el login elige la sesión 'i3' y entra."
 echo "Primera vez en i3: Mod = Alt, acepta generar la config si te lo pregunta."
 echo "Atajos: Alt+Return terminal · Alt+T 4 terminales · Alt+M ir al monitor (espacio 1) · Alt+D lanzador · Alt+I InfoForge · Alt+Shift+B bienvenida · Alt+Shift+P captura completa"
-echo "Fondo de pantalla: nitrogen --restore ya funciona en Arch (nitrogen sí está en el repo extra)."
-echo "Si quieres cambiar el fondo, corre 'nitrogen' y elige tu foto; con feh también vale: feh --bg-fill ~/Imágenes/tu-foto.png"
+echo "Fondo de pantalla: con feh (nitrogen ya no está en los repos de Arch)."
+echo "Para poner tu foto: feh --bg-fill ~/Imágenes/tu-foto.png"
 if [[ "$NO_SEGURIDAD" == false ]]; then
   echo "Seguridad: revisa el cortafuegos con 'sudo ufw status verbose' y abre Tor Browser con 'torbrowser-launcher'."
 fi
