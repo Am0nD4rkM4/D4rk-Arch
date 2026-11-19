@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# ForgeOS para Arch — bienvenida al entrar a i3
+# Muestra en una terminal un banner con el nombre del sistema y un
+# resumen corto: usuario, fecha, RAM, disco e IP. Si algo falla
+# (por ejemplo, no hay IP todavía), muestra un guion y sigue: nada
+# de lo que sale aquí es crítico, es solo una bienvenida.
+# Uso: forgeos-bienvenida (se abre sola al entrar a i3, y con Alt+Shift+B)
+# Pulsa Enter al final para cerrar la terminal.
+VERDE='\033[1;32m'
+VERDE_OSCURO='\033[0;32m'
+SIN_COLOR='\033[0m'
+
+clear 2>/dev/null || printf '\033[2J\033[H'
+printf '%b' "$VERDE"
+cat <<'BANNER'
+  ______ ___  ____   ____ _____ ___  ____
+ |  ____/ _ \|  _ \ / ___| ____/ _ \/ ___|
+ | |_  | | | | |_) | |  _|  _|| | | \___ \
+ |  _| | |_| |  _ <| |_| | |__| |_| |___) |
+ |_|    \___/|_| \_\____|_____\___/|____/
+        ___    ____   ____ _   _
+       / _ \  |  _ \ / ___| | | |
+      | |_| | | |_) | |   | |_| |
+      |  _  | |  _ <| |___|  _  |
+      |_| |_| |_| \_\____|_| |_|
+BANNER
+printf '%b' "$SIN_COLOR"
+echo
+printf '%b' "$VERDE_OSCURO"
+echo "  Arch Linux + i3 · solo terminales"
+printf '%b' "$SIN_COLOR"
+echo
+# Usuario y equipo: whoami y hostname nunca deberían fallar, pero si
+# fallan se muestra un guion en vez de romperse.
+echo "  Usuario: $(whoami 2>/dev/null || echo "-")@$(hostname 2>/dev/null || echo "-")"
+echo "  Fecha:   $(date '+%Y-%m-%d %H:%M' 2>/dev/null || echo "-")"
+echo "  Sistema: $(grep '^PRETTY_NAME=' /etc/os-release 2>/dev/null | cut -d= -f2- | tr -d '"' || echo "Arch Linux")"
+echo "  Kernel:  $(uname -r 2>/dev/null || echo "-")"
+echo "  Uptime:  $(uptime -p 2>/dev/null || uptime 2>/dev/null | cut -d, -f1 || echo "-")"
+echo
+echo "  -- RAM --"
+free -h 2>/dev/null | head -2 || echo "  sin datos"
+echo "  -- Disco / --"
+df -h / 2>/dev/null | tail -1 || echo "  sin datos"
+echo "  -- IP --"
+hostname -I 2>/dev/null | awk '{print "  " $1}' || ip -brief addr 2>/dev/null | head -3 || echo "  sin IP"
+echo
+echo "  Atajos: Alt+Return terminal · Alt+T 4 terminales · Alt+M monitor"
+echo "          Alt+D lanzador · Alt+Shift+B bienvenida · Alt+Shift+E salir"
+echo
+# read -rp espera a que pulses Enter; si la entrada no es una terminal
+# (por ejemplo, se corre en un script), no se queda colgado: || true.
+read -rp "  Pulsa Enter para cerrar..." _ 2>/dev/null || true

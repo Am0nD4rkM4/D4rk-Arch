@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# ForgeOS — monitor a pantalla completa en el espacio 1 (v2.2)
+# Abre una terminal con btop (arriba) y forgeos-sysinfo (abajo: usuario,
+# equipo, uptime, RAM, disco, IP) en el espacio 1, en mosaico normal.
+# Mod+M (Alt+M) va al espacio 1; Mod+Shift+M reabre el monitor si se cerró.
+# En v2.1 el monitor era una ventana flotante fija en la esquina superior
+# derecha (34% de ancho), pero btop exige 80x24 y en la laptop de Luis
+# quedaba en 42x9, así que en v2.2 se vuelve al espacio 1 a pantalla
+# completa, como en v2.0. Sin scratchpad ni ventana flotante.
+# La ventana se identifica por su clase (instance ForgeOS-Monitor, con
+# --class), no por el título: el título cambia cuando arranca btop.
+# Uso: forgeos-monitor
+set -euo pipefail
+TERM_CMD="${TERMINAL:-alacritty}"
+if ! command -v "$TERM_CMD" >/dev/null 2>&1; then
+  echo "forgeos-monitor: terminal '$TERM_CMD' no encontrada (instala alacritty)" >&2
+  exit 1
+fi
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "forgeos-monitor: tmux no encontrado" >&2
+  exit 1
+fi
+SYSINFO="/usr/local/bin/forgeos-sysinfo"
+if [[ ! -x "$SYSINFO" ]]; then
+  echo "forgeos-monitor: no está $SYSINFO (instala ForgeOS para Arch con install-arch.sh)" >&2
+  exit 1
+fi
+if ! tmux has-session -t forgeos-monitor 2>/dev/null; then
+  tmux new-session -d -s forgeos-monitor 'btop'
+  tmux split-window -v -p 30 -t forgeos-monitor "bash $SYSINFO"
+  tmux select-pane -t forgeos-monitor:0.0
+fi
+if command -v i3-msg >/dev/null 2>&1; then
+  # Si la ventana ya existe, ir a ella (vive en el espacio 1); si no,
+  # abrirla ahí, en mosaico normal, a pantalla completa.
+  if i3-msg -t get_tree 2>/dev/null | grep -q '"instance": "ForgeOS-Monitor"'; then
+    i3-msg '[instance="ForgeOS-Monitor"] focus' >/dev/null
+    exit 0
+  fi
+  i3-msg "workspace number 1" >/dev/null
+  i3-msg "exec $TERM_CMD --class ForgeOS-Monitor -T 'ForgeOS Monitor' -e tmux attach-session -t forgeos-monitor" >/dev/null
+else
+  "$TERM_CMD" --class ForgeOS-Monitor -T 'ForgeOS Monitor' -e tmux attach-session -t forgeos-monitor &
+fi
