@@ -161,6 +161,39 @@ def main():
     comprobar("LICENSE dice Arch Linux, no Debian",
               "Arch Linux" in licencia and "Debian" not in licencia)
 
+    # 12. Paso 7/7 de seguridad: paquetes, cortafuegos, sysctl, Tor
+    # y BlackArch opt-in para metasploit/armitage.
+    for paquete in ["ufw", "fail2ban", "lynis", "arch-audit", "clamav",
+                    "rkhunter", "tcpdump", "wireshark-qt", "zenmap",
+                    "hydra", "john", "hashcat", "aircrack-ng",
+                    "tor", "torsocks", "torbrowser-launcher",
+                    "obfs4proxy"]:
+        comprobar(f"install-arch.sh instala {paquete} (paso 7/7)",
+                  paquete in instalador)
+    comprobar("install-arch.sh tiene paso 7/7 de seguridad",
+              "7/7 Seguridad" in instalador)
+    comprobar("install-arch.sh acepta --no-seguridad",
+              "--no-seguridad" in instalador and "NO_SEGURIDAD" in instalador)
+    comprobar("install-arch.sh acepta --con-blackarch",
+              "--con-blackarch" in instalador and "CON_BLACKARCH" in instalador)
+    comprobar("install-arch.sh instala metasploit solo con BlackArch",
+              "metasploit" in instalador and "strap.sh" in instalador)
+    comprobar("install-arch.sh instala armitage solo con BlackArch",
+              "armitage" in instalador and "CON_BLACKARCH" in instalador)
+    comprobar("install-arch.sh no añade BlackArch por defecto",
+              "BlackArch NO añadido" in instalador)
+    comprobar("install-arch.sh configura ufw deny incoming",
+              "ufw default deny incoming" in instalador)
+    comprobar("install-arch.sh escribe sysctl de endurecimiento",
+              "99-forgeos-seguridad.conf" in instalador
+              and "tcp_syncookies" in instalador)
+    comprobar("install-arch.sh activa tor.service",
+              "tor.service" in instalador)
+    comprobar("README menciona Tor Browser",
+              "Tor Browser" in readme)
+    comprobar("README menciona metasploit y armitage",
+              "metasploit" in readme and "armitage" in readme)
+
     # Resumen final.
     print(f"\n{PASADAS} pasadas, {len(FALLADAS)} falladas")
     if FALLADAS:

@@ -59,7 +59,19 @@ Prueba en seco, sin instalar nada:
 sudo bash install-arch.sh --dry-run
 ```
 
-El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, nitrogen, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3) e intenta clonar InfoForge.
+El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, nitrogen, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3), endurece la seguridad (paso 7/7, ver abajo) e intenta clonar InfoForge.
+
+Para saltarte la seguridad:
+
+```bash
+sudo bash install-arch.sh --no-seguridad
+```
+
+Para añadir además BlackArch con Metasploit y Armitage:
+
+```bash
+sudo bash install-arch.sh --con-blackarch
+```
 
 ### 5) Entra a i3
 
@@ -147,6 +159,45 @@ Las herramientas que usas en Kali están en los repos de Arch, con otros nombres
 
 El instalador ya instala `nmap`, `whois`, `bind-tools`, `openbsd-netcat`, `curl`, `openssl` y `python` en el paso 3/6.
 
+## Seguridad (paso 7/7, por defecto)
+
+El instalador endurece el sistema y pone herramientas de seguridad, todo de los repos oficiales de Arch salvo Metasploit y Armitage (ver BlackArch abajo):
+
+- **Cortafuegos:** `ufw` con `default deny incoming` (nada entra si no lo abres tú) y `allow outgoing`. Se enciende solo. Compruébalo con `sudo ufw status verbose`. Si algún día abres un servicio, ábrelo a mano, por ejemplo `sudo ufw allow 4444/tcp`. Tu servidor en C escucha solo en `127.0.0.1`, así que no necesita abrir nada.
+- **Kernel y red:** `/etc/sysctl.d/99-forgeos-seguridad.conf` con `tcp_syncookies`, `rp_filter`, sin redirecciones ICMP, `kptr_restrict` y enlaces protegidos.
+- **Servicios:** `fail2ban` (banea IPs que fallan logins, útil si abres SSH) y `tor` activados al arrancar.
+- **Auditoría:** `lynis` (`sudo lynis audit system`), `arch-audit` (revisa tus paquetes contra CVEs de Arch), `clamav` y `rkhunter`.
+- **Pentest (repos oficiales):** `wireshark-qt`, `zenmap` (la ventana de nmap), `hydra`, `john`, `hashcat`, `aircrack-ng`, `tcpdump`. Todo solo para tu propia máquina y tu laboratorio, o un objetivo con permiso. Nunca contra terceros.
+
+Para saltarte este paso: `sudo bash install-arch.sh --no-seguridad`.
+
+## Tor y Tor Browser
+
+Sí se puede, y va en el paso 7/7 por defecto, de los repos oficiales:
+
+```bash
+sudo pacman -S tor torbrowser-launcher
+```
+
+- `tor` es el demonio Tor (proxy en `127.0.0.1:9050`, activado al arrancar).
+- `torbrowser-launcher` descarga, verifica y lanza el **Tor Browser** oficial la primera vez que lo corres. No es el navegador en sí, es el lanzador que lo baja de torproject.org.
+
+```bash
+torbrowser-launcher
+```
+
+La primera vez tarda porque descarga el navegador. Después lo abres igual. Tor es más lento que Firefox normal porque tu tráfico pasa por varios relevos, y algunas páginas bloquean las salidas de Tor. Es para navegar con privacidad, no para el día a día.
+
+## BlackArch: Metasploit y Armitage (opcional, solo con `--con-blackarch`)
+
+Metasploit y Armitage **no están en los repos oficiales de Arch**, están en BlackArch. Por eso el instalador **no** añade BlackArch por defecto: añadirlo es meter un repositorio de terceros con su script oficial `strap.sh`, y Metasploit es pesado (cientos de MB). Solo se hace si corres el instalador con:
+
+```bash
+sudo bash install-arch.sh --con-blackarch
+```
+
+Eso añade BlackArch y luego instala `metasploit` (`msfconsole`) y `armitage` (su ventana gráfica, necesita Metasploit y Java). Sin ese flag, no se instala nada de BlackArch.
+
 Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (opcional, no se instala por defecto): es un repositorio aparte con miles de herramientas de seguridad para Arch. Si algún día lo quieres, se añade siguiendo su guía oficial (blackarch.org), pero no hace falta para empezar.
 
 ## Qué lleva preinstalado
@@ -157,6 +208,9 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 - **Sistema:** htop, btop, NetworkManager, Bluetooth, PipeWire, brightnessctl
 - **Archivos y web:** Thunar, Firefox, flameshot
 - **Red / seguridad:** nmap, whois, bind-tools (dig), openbsd-netcat, curl, openssl, python, jq
+- **Seguridad (paso 7/7):** ufw (deny incoming), fail2ban, lynis, arch-audit, clamav, rkhunter, sysctl endurecido, wireshark-qt, zenmap, hydra, john, hashcat, aircrack-ng, tcpdump
+- **Tor:** tor, torsocks, torbrowser-launcher (descarga el Tor Browser oficial), obfs4proxy
+- **BlackArch (solo con `--con-blackarch`):** metasploit, armitage
 
 ## Estructura
 

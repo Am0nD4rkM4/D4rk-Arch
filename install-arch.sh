@@ -13,6 +13,17 @@
 #   sudo bash install-arch.sh            # instalación completa
 #   sudo bash install-arch.sh --dry-run  # solo muestra lo que haría
 #   sudo bash install-arch.sh --no-infoforge  # sin clonar InfoForge
+#   sudo bash install-arch.sh --no-seguridad  # sin el paso 7/7 de seguridad
+#   sudo bash install-arch.sh --con-blackarch  # además, BlackArch + metasploit y armitage
+#     --con-blackarch es OPCIONAL y aparte: añade el repositorio de
+#     BlackArch (un repo de terceros, no oficial de Arch) con su script
+#     strap.sh, y luego instala metasploit y armitage desde ahí.
+#     Metasploit es pesado (cientos de MB) y solo sirve para tus pruebas
+#     en tu propio laboratorio o con permiso. Sin ese flag, el paso 7/7
+#     instala solo herramientas de los repos oficiales de Arch.
+#   Tor sí va en el paso 7/7 por defecto: tor + torbrowser-launcher
+#     (repos oficiales). La primera vez que corres torbrowser-launcher
+#     descarga el Tor Browser oficial y lo verifica.
 #
 # Requiere: Arch Linux instalado, conexión a internet, sudo.
 # Después: cierra sesión, en el login elige la sesión "i3" y entra.
@@ -24,9 +35,13 @@ set -euo pipefail
 
 DRY_RUN=false
 NO_INFOFORGE=false
+NO_SEGURIDAD=false
+CON_BLACKARCH=false
 # DRY_RUN=false: dos interruptores que empiezan apagados. DRY_RUN es el
 # modo "ensayo": si se enciende con --dry-run, el script solo dice lo que
 # haría, sin instalar nada. NO_INFOFORGE es "no clonar InfoForge".
+# NO_SEGURIDAD es "saltarse el paso 7/7". CON_BLACKARCH es "añadir el
+# repo BlackArch e instalar metasploit y armitage" (opcional, apagado).
 for arg in "$@"; do
   # for arg in "$@": repasa cada argumento que le pasaste al script en la
   # terminal, por ejemplo "sudo bash install-arch.sh --dry-run". "$@" son
@@ -36,6 +51,8 @@ for arg in "$@"; do
     # como el switch de C# o muchos if/else. ;; significa "fin de esta rama".
     --dry-run) DRY_RUN=true ;;
     --no-infoforge) NO_INFOFORGE=true ;;
+    --no-seguridad) NO_SEGURIDAD=true ;;
+    --con-blackarch) CON_BLACKARCH=true ;;
     *) echo "Opción desconocida: $arg"; exit 2 ;;
     # *: "cualquier otra cosa": si el argumento no es ninguno de los dos
     # conocidos, avisa y sale con código 2 (error).
@@ -217,9 +234,119 @@ if [[ "$NO_INFOFORGE" == false ]]; then
   fi
 fi
 
+log "7/7 Seguridad, Tor y herramientas de pentest..."
+# Paso 7: endurecer el sistema y poner herramientas de seguridad.
+# Solo si NO_SEGURIDAD está apagado (por defecto va activado; se salta
+# con --no-seguridad). Todo esto es SOLO para tu propia máquina y tu
+# laboratorio, o un objetivo con permiso. Nunca contra terceros.
+# Qué es cada cosa (nombres de Arch, repos oficiales salvo BlackArch):
+# ufw = cortafuegos fácil (por encima de nftables/iptables). fail2ban =
+# banea IPs que fallan muchos logins (útil si algún día abres SSH).
+# lynis = auditoría de seguridad, te da nota y recomendaciones.
+# arch-audit = revisa tus paquetes instalados contra la base de CVEs de Arch.
+# clamav = antivirus (fresco con freshclam, no se corre solo aquí).
+# rkhunter = busca rootkits conocidos. tcpdump = capturar paquetes.
+# wireshark-qt = analizar red con ventana (tshark es su versión terminal).
+# zenmap = la ventana gráfica de nmap (repo extra, no AUR).
+# hydra = auditar contraseñas de servicios (solo tus servicios).
+# john = John the Ripper, auditar hashes de contraseñas (solo tuyas).
+# hashcat = lo mismo, con GPU. aircrack-ng = auditar Wi-Fi (solo tu red).
+# tor = el demonio Tor (proxy SOCKS en 127.0.0.1:9050). torsocks = correr
+# un programa por Tor. torbrowser-launcher = descarga, verifica y lanza
+# el Tor Browser oficial (no es el navegador en sí: lo baja la primera vez).
+# obfs4proxy = puentes ofuscados de Tor, por si Tor está bloqueado en una red.
+if [[ "$NO_SEGURIDAD" == false ]]; then
+  # 7a. Paquetes de seguridad y pentest de los repos oficiales.
+  # || true: si un paquete cambió de nombre o de repo, el resto sigue.
+  run pacman -S --noconfirm --needed \
+    ufw fail2ban lynis arch-audit clamav rkhunter tcpdump \
+    wireshark-qt zenmap hydra john hashcat aircrack-ng \
+    tor torsocks torbrowser-launcher obfs4proxy 2>/dev/null || true
+
+  # 7b. Cortafuegos: denegar todo lo que entra, permitir lo que sale.
+  # ufw default deny incoming = "nada entra si no lo abro yo".
+  # ufw --force enable = encenderlo sin preguntar. Si algún día abres
+  # un servicio (por ejemplo tu servidor en C en el 4444, solo en local),
+  # ese puerto NO se abre solo: tendrías que hacer "sudo ufw allow 4444/tcp".
+  # Ojo: esto no abre nada hacia internet; el servidor en C escucha solo
+  # en 127.0.0.1, así que ni siquiera llega al cortafuegos desde fuera.
+  run ufw default deny incoming 2>/dev/null || true
+  run ufw default allow outgoing 2>/dev/null || true
+  run ufw --force enable 2>/dev/null || true
+  run systemctl enable ufw.service 2>/dev/null || true
+  run systemctl enable fail2ban.service 2>/dev/null || true
+  run systemctl enable tor.service 2>/dev/null || true
+
+  # 7c. Endurecimiento del kernel y la red, en /etc/sysctl.d/.
+  # net.ipv4.tcp_syncookies = 1: protege contra inundación SYN.
+  # rp_filter = 1: descarta paquetes con origen falso (spoofing).
+  # accept_redirects / send_redirects = 0: no aceptar ni mandar
+  # redirecciones ICMP (alguien redirigiendo tu tráfico).
+  # icmp_echo_ignore_broadcasts = 1: no responder a pings de broadcast.
+  # log_martians = 1: registrar paquetes con origen imposible.
+  # kernel.kptr_restrict = 2 y kernel.dmesg_restrict = 1: que un usuario
+  # normal no vea direcciones del kernel ni el registro del kernel.
+  # fs.protected_hardlinks / protected_symlinks = 1: que nadie cree
+  # enlaces para robar o sobreescribir archivos de otro usuario.
+  if $DRY_RUN; then
+    echo "[dry-run] escribir /etc/sysctl.d/99-forgeos-seguridad.conf"
+    echo "[dry-run] sysctl --system"
+  else
+    cat > /etc/sysctl.d/99-forgeos-seguridad.conf <<'EOF'
+net.ipv4.tcp_syncookies = 1
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.log_martians = 1
+kernel.kptr_restrict = 2
+kernel.dmesg_restrict = 1
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+EOF
+    sysctl --system 2>/dev/null || true
+  fi
+
+  # 7d. BlackArch (OPCIONAL, solo con --con-blackarch).
+  # Metasploit y Armitage NO están en los repos oficiales de Arch:
+  # están en BlackArch. Añadir BlackArch es añadir un repositorio de
+  # terceros: su script oficial strap.sh mete el repo y sus claves en
+  # /etc/pacman.conf. Por eso NO se hace solo: solo si pasas el flag.
+  # metasploit = framework de explotación (msfconsole). armitage = su
+  # ventana gráfica (necesita metasploit y Java). Son pesados y tardan.
+  # Después: "msfconsole" para arrancar Metasploit, "armitage" para su GUI.
+  if [[ "$CON_BLACKARCH" == true ]]; then
+    log "BlackArch: añadiendo el repositorio (solo porque pasaste --con-blackarch)..."
+    if $DRY_RUN; then
+      echo "[dry-run] cd /tmp && curl -O https://blackarch.org/strap.sh && chmod +x strap.sh && ./strap.sh"
+      echo "[dry-run] pacman -Sy && pacman -S metasploit armitage"
+    else
+      (cd /tmp && curl -O https://blackarch.org/strap.sh \
+        && chmod +x strap.sh && ./strap.sh) 2>/dev/null \
+        || echo 'No se pudo añadir BlackArch; revisa tu internet y blackarch.org'
+      run pacman -Sy --noconfirm 2>/dev/null || true
+      run pacman -S --noconfirm --needed metasploit armitage 2>/dev/null \
+        || echo 'No se pudo instalar metasploit/armitage; prueba a mano: sudo pacman -S metasploit armitage'
+    fi
+  else
+    echo "BlackArch NO añadido (por defecto). Para metasploit y armitage, corre el instalador con --con-blackarch."
+  fi
+  echo "Seguridad lista: ufw encendido (deny incoming), fail2ban y tor activados, sysctl endurecido."
+  echo "Tor Browser: la primera vez corre 'torbrowser-launcher' en una terminal y descarga el navegador oficial."
+  echo "Auditoría: 'sudo lynis audit system' y 'arch-audit' para revisar tu sistema."
+else
+  log "Paso 7/7 saltado (--no-seguridad)."
+fi
+
 log "Listo."
 echo "Ahora: cierra sesión, en el login elige la sesión 'i3' y entra."
 echo "Primera vez en i3: Mod = Alt, acepta generar la config si te lo pregunta."
 echo "Atajos: Alt+Return terminal · Alt+T 4 terminales · Alt+M ir al monitor (espacio 1) · Alt+D lanzador · Alt+I InfoForge · Alt+Shift+B bienvenida · Alt+Shift+P captura completa"
 echo "Fondo de pantalla: nitrogen --restore ya funciona en Arch (nitrogen sí está en el repo extra)."
 echo "Si quieres cambiar el fondo, corre 'nitrogen' y elige tu foto; con feh también vale: feh --bg-fill ~/Imágenes/tu-foto.png"
+if [[ "$NO_SEGURIDAD" == false ]]; then
+  echo "Seguridad: revisa el cortafuegos con 'sudo ufw status verbose' y abre Tor Browser con 'torbrowser-launcher'."
+fi
