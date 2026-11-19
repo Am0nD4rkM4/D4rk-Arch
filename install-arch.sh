@@ -213,10 +213,14 @@ if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
   fi
 fi
 
-log "6/6 InfoForge (opcional)..."
-# Paso 6: bajar InfoForge de GitHub con git clone, en tu carpeta personal.
-# Solo si NO_INFOFORGE está apagado (o sea, si no pasaste --no-infoforge).
-# Si la carpeta InfoForge ya existe, no se clona de nuevo.
+log "6/6 InfoForge y Server-C (opcional)..."
+# Paso 6: bajar InfoForge y Server-C de GitHub con git clone, en tu
+# carpeta personal, para no tener que bajarlos a mano después.
+# InfoForge solo si NO_INFOFORGE está apagado (o sea, si no pasaste
+# --no-infoforge). Server-C se baja siempre en este paso, salvo que la
+# carpeta ya exista: es tu servidor de laboratorio en C (solo 127.0.0.1,
+# puerto 4444), para probarlo con nmap/nc/Metasploit desde la misma laptop.
+# Si una carpeta ya existe, no se clona de nuevo.
 # git clone descarga una copia de un repo. sudo -u "$USER_NAME" lo hace
 # como tu usuario, no como root, para que los archivos sean tuyos.
 # Si falla el clonado, avisa y sigue: no rompe la instalación.
@@ -231,6 +235,17 @@ if [[ "$NO_INFOFORGE" == false ]]; then
     else
       sudo -u "$USER_NAME" git clone https://github.com/Am0nD4rkM4/InfoForge.git "$USER_HOME/InfoForge" 2>/dev/null || echo 'No se pudo clonar InfoForge (repo privado: usa tu SSH/token y clónalo a mano)'
     fi
+  fi
+fi
+if [[ -d "$USER_HOME/Server-C" ]]; then
+  log "Server-C ya existe en tu home, no lo clono de nuevo."
+else
+  if $DRY_RUN; then
+    echo "[dry-run] git clone https://github.com/Am0nD4rkM4/Server-C.git $USER_HOME/Server-C (como $USER_NAME)"
+  elif [[ "$USER_NAME" == "root" ]]; then
+    git clone https://github.com/Am0nD4rkM4/Server-C.git "$USER_HOME/Server-C" 2>/dev/null || echo 'No se pudo clonar Server-C (revisa tu internet y clónalo a mano)'
+  else
+    sudo -u "$USER_NAME" git clone https://github.com/Am0nD4rkM4/Server-C.git "$USER_HOME/Server-C" 2>/dev/null || echo 'No se pudo clonar Server-C (revisa tu internet y clónalo a mano)'
   fi
 fi
 
@@ -350,3 +365,4 @@ echo "Si quieres cambiar el fondo, corre 'nitrogen' y elige tu foto; con feh tam
 if [[ "$NO_SEGURIDAD" == false ]]; then
   echo "Seguridad: revisa el cortafuegos con 'sudo ufw status verbose' y abre Tor Browser con 'torbrowser-launcher'."
 fi
+echo "Server-C ya quedó en ~/Server-C: entra ahí y corre 'gcc -Wall -o servidor servidor.c && ./servidor' para probarlo en local."

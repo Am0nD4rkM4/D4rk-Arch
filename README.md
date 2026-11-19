@@ -59,7 +59,7 @@ Prueba en seco, sin instalar nada:
 sudo bash install-arch.sh --dry-run
 ```
 
-El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, nitrogen, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3), endurece la seguridad (paso 7/7, ver abajo) e intenta clonar InfoForge.
+El instalador actualiza pacman, instala Xorg, LightDM, i3, rofi, picom, nitrogen, feh, Alacritty, btop y el resto, copia las configs a `~/.config/` (con copia de seguridad si ya tenías una config de i3), endurece la seguridad (paso 7/7, ver abajo) e intenta clonar InfoForge **y Server-C** (tu servidor de laboratorio en C, en `~/Server-C`, para probarlo en local con `nmap`, `nc` y Metasploit desde la misma laptop).
 
 Para saltarte la seguridad:
 
@@ -211,6 +211,7 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 - **Seguridad (paso 7/7):** ufw (deny incoming), fail2ban, lynis, arch-audit, clamav, rkhunter, sysctl endurecido, wireshark-qt, zenmap, hydra, john, hashcat, aircrack-ng, tcpdump
 - **Tor:** tor, torsocks, torbrowser-launcher (descarga el Tor Browser oficial), obfs4proxy
 - **BlackArch (solo con `--con-blackarch`):** metasploit, armitage
+- **Laboratorio:** Server-C clonado en `~/Server-C` (servidor en C, solo 127.0.0.1:4444); ahí dentro, `gcc -Wall -o servidor servidor.c && ./servidor`, y en otra terminal `nc 127.0.0.1 4444`
 
 ## Estructura
 

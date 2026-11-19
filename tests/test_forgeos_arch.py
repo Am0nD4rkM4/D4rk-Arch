@@ -194,6 +194,15 @@ def main():
     comprobar("README menciona metasploit y armitage",
               "metasploit" in readme and "armitage" in readme)
 
+    # 13. Paso 6/6 clona también Server-C, el servidor de laboratorio.
+    comprobar("install-arch.sh clona Server-C en el paso 6/6",
+              "Server-C" in instalador
+              and "github.com/Am0nD4rkM4/Server-C.git" in instalador)
+    comprobar("install-arch.sh no clona Server-C dos veces si ya existe",
+              "Server-C ya existe en tu home" in instalador)
+    comprobar("README menciona Server-C",
+              "Server-C" in readme)
+
     # Resumen final.
     print(f"\n{PASADAS} pasadas, {len(FALLADAS)} falladas")
     if FALLADAS:
