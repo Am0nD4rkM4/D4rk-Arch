@@ -36,25 +36,26 @@ log "1/6 Paquetes nuevos de la v2 (mpv y ffmpeg, repos oficiales)..."
 sudo pacman -S --noconfirm --needed mpv ffmpeg \
   || echo "Aviso: no se pudieron instalar mpv/ffmpeg; el fondo animado quedará apagado (el resto sigue)."
 
-log "2/6 xwinwrap (AUR) solo si falta..."
-# xwinwrap NO está en los repos oficiales, solo en el AUR. Se compila
-# con makepkg, que NO se puede correr como root: se corre como tu usuario.
-# makepkg necesita base-devel; el instalador v1 ya lo trae, pero si por
-# lo que sea falta, se instala aquí antes de compilar. Sin 2>/dev/null:
-# si el clon o la compilación fallan, el error real tiene que verse.
+log "2/6 xwinwrap (solo si falta; desde GitHub, no del AUR)..."
+# El paquete `xwinwrap` del AUR ya no existe (su repo git viene vacío).
+# Se compila desde el fork de GitHub ujjwal96/xwinwrap con make +
+# sudo make install. make necesita base-devel; el instalador v1 ya lo
+# trae, pero si por lo que sea falta, se instala aquí antes de compilar.
+# Sin 2>/dev/null: si el clon o la compilación fallan, el error real
+# tiene que verse.
 if command -v xwinwrap >/dev/null 2>&1; then
   echo "xwinwrap ya está instalado, lo salto."
 else
-  if ! command -v makepkg >/dev/null 2>&1; then
+  if ! command -v make >/dev/null 2>&1; then
     sudo pacman -S --noconfirm --needed base-devel git \
       || echo "Aviso: no se pudo instalar base-devel; el fondo animado quedará apagado."
   fi
   rm -rf /tmp/forgeos-xwinwrap
-  if git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap; then
-    (cd /tmp/forgeos-xwinwrap && makepkg -si --noconfirm) \
+  if git clone https://github.com/ujjwal96/xwinwrap.git /tmp/forgeos-xwinwrap; then
+    (cd /tmp/forgeos-xwinwrap && make && sudo make install) \
       || echo "Aviso: no se pudo compilar xwinwrap; el fondo animado quedará apagado (el resto sigue)."
   else
-    echo "Aviso: no se pudo bajar xwinwrap del AUR; revisa tu internet y corre el actualizador de nuevo."
+    echo "Aviso: no se pudo bajar xwinwrap de GitHub; revisa tu internet y corre el actualizador de nuevo."
   fi
 fi
 

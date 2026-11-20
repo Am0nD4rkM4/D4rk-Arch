@@ -102,7 +102,7 @@ cd ~/D4rk-Arch && git pull
 bash update-d4rk-arch.sh
 ```
 
-El actualizador instala solo lo nuevo (mpv, ffmpeg, xwinwrap del AUR, los scripts nuevos), genera el vídeo si falta, añade los atajos nuevos a tu config de i3 sin borrar lo que tengas, pone el prompt multicolor en `~/.bashrc` y recarga i3. Se puede correr varias veces: lo que ya está hecho se salta solo.
+El actualizador instala solo lo nuevo (mpv, ffmpeg, xwinwrap de GitHub, los scripts nuevos), genera el vídeo si falta, añade los atajos nuevos a tu config de i3 sin borrar lo que tengas, pone el prompt multicolor en `~/.bashrc` y recarga i3. Se puede correr varias veces: lo que ya está hecho se salta solo.
 
 Y algún detalle más por descubrir.
 
@@ -160,7 +160,7 @@ Esa línea ya está en la config de i3, así que el fondo se pone solo al entrar
 
 ### Fondo animado (v2)
 
-Además del fondo estático, la v2 trae un fondo animado: un vídeo en bucle de aurora verde oscura (generado en tu máquina con `ffmpeg`, `~/.config/forgeos/fondo-animado.mp4`), que se mueve detrás de las ventanas con `mpv` + `xwinwrap` (este último solo está en el AUR y se compila al instalar o actualizar).
+Además del fondo estático, la v2 trae un fondo animado: un vídeo en bucle de aurora verde oscura (generado en tu máquina con `ffmpeg`, `~/.config/forgeos/fondo-animado.mp4`), que se mueve detrás de las ventanas con `mpv` + `xwinwrap` (este último se compila desde GitHub, fork ujjwal96/xwinwrap, al instalar o actualizar).
 
 - Se enciende solo al entrar a i3. Para apagarlo o encenderlo: menú ForgeOS (`Alt+Shift+N`, "Fondo animado (on/off)") o en terminal: `forgeos-fondo toggle` (también `on`, `off` y `status`).
 - Si el vídeo no existe, se genera con `forgeos-fondo generar` (tarda un poco).
@@ -226,7 +226,7 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 ## Qué lleva preinstalado
 
 - **Escritorio:** i3, i3status, i3lock, rofi, picom, feh, LightDM
-- **Menú y fondo (v2):** `forgeos-menu` (Alt+Shift+N), `forgeos-fondo` (fondo animado con mpv + xwinwrap del AUR, vídeo generado con ffmpeg), prompt multicolor en bash
+- **Menú y fondo (v2):** `forgeos-menu` (Alt+Shift+N), `forgeos-fondo` (fondo animado con mpv + xwinwrap de GitHub, vídeo generado con ffmpeg), prompt multicolor en bash
 - **Monitor:** btop, fastfetch, `forgeos-monitor`, `forgeos-sysinfo`
 - **Terminal:** Alacritty (JetBrains Mono), verde `#00ff41` sobre negro, translúcida (opacity 0.80), tmux
 - **Sistema:** htop, btop, NetworkManager, Bluetooth, PipeWire, brightnessctl

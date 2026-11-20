@@ -229,9 +229,12 @@ if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
 fi
 
 log "Fondo animado y prompt multicolor (v2)..."
-# xwinwrap NO está en los repos oficiales, solo en el AUR. Se compila
-# con makepkg, que NO se puede correr como root: se corre como tu usuario
-# (sudo -u "$USER_NAME"), con base-devel, que ya se instaló en el paso 2/6.
+# xwinwrap NO está en los repos oficiales, y el paquete `xwinwrap` del
+# AUR ya no existe (su repo git viene vacío: git clone avisa "repositorio
+# sin contenido" y makepkg dice "PKGBUILD no existe"). Se compila desde
+# el fork de GitHub ujjwal96/xwinwrap con make + make install, como tu
+# usuario (sudo -u "$USER_NAME"); el make install lo corre el instalador
+# como root. base-devel ya se instaló en el paso 2/6.
 # Si falla el clonado o la compilación, el fondo animado queda apagado y
 # sigue el fondo estático con feh: nada de esto rompe la instalación.
 if command -v xwinwrap >/dev/null 2>&1; then
@@ -239,12 +242,12 @@ if command -v xwinwrap >/dev/null 2>&1; then
 else
   rm -rf /tmp/forgeos-xwinwrap
   if $DRY_RUN; then
-    echo "[dry-run] git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap && makepkg -si (como $USER_NAME)"
-  elif sudo -u "$USER_NAME" git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap 2>/dev/null; then
-    sudo -u "$USER_NAME" bash -c 'cd /tmp/forgeos-xwinwrap && makepkg -si --noconfirm' 2>/dev/null \
+    echo "[dry-run] git clone https://github.com/ujjwal96/xwinwrap.git /tmp/forgeos-xwinwrap && make && make install (como $USER_NAME)"
+  elif sudo -u "$USER_NAME" git clone https://github.com/ujjwal96/xwinwrap.git /tmp/forgeos-xwinwrap; then
+    sudo -u "$USER_NAME" bash -c 'cd /tmp/forgeos-xwinwrap && make' && make install \
       || echo "Aviso: no se pudo compilar xwinwrap; el fondo animado quedará apagado (el resto sigue)."
   else
-    echo "Aviso: no se pudo bajar xwinwrap del AUR; el fondo animado quedará apagado (el resto sigue)."
+    echo "Aviso: no se pudo bajar xwinwrap de GitHub; el fondo animado quedará apagado (el resto sigue)."
   fi
 fi
 # Vídeo del fondo animado: se genera en tu máquina con ffmpeg, solo si

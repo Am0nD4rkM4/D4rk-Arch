@@ -56,7 +56,7 @@ encender() {
     return 0
   fi
   if ! command -v xwinwrap >/dev/null 2>&1; then
-    echo "forgeos-fondo: xwinwrap no instalado (AUR); fondo estático con feh" >&2
+    echo "forgeos-fondo: xwinwrap no instalado (se compila de GitHub: ujjwal96/xwinwrap); fondo estático con feh" >&2
     fondo_estatico
     return 0
   fi
