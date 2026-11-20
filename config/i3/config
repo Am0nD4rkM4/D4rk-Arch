@@ -76,6 +76,12 @@ bindsym $mod+Shift+e exec i3-nagbar -t warning -m '¿Salir de i3?' -B 'Sí, sali
 # Lanzador y utilidades
 bindsym $mod+d exec $menu
 bindsym $mod+Shift+d exec rofi -show run
+# Menú ForgeOS (v2): terminal, Firefox, InfoForge, Server-C, Metasploit,
+# Armitage, Wi-Fi, Bluetooth, volumen, fondo animado, monitor, salir...
+# Alt+Shift+D ya es rofi run, por eso el menú va en Alt+Shift+N.
+bindsym $mod+Shift+n exec forgeos-menu
+# Chuleta de atajos (v2)
+bindsym $mod+Shift+a exec forgeos-atajos
 bindsym $mod+Control+l exec i3lock -c 000000
 bindsym $mod+Shift+s exec flameshot gui
 bindsym Print exec flameshot gui
@@ -162,6 +168,8 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 # Arranque
 exec --no-startup-id picom --config ~/.config/picom/picom.conf
 exec --no-startup-id feh --bg-fill ~/Imágenes/tu-foto.png 2>/dev/null || true
+# Fondo animado al entrar (v2): si falla algo, queda el fondo con feh.
+exec --no-startup-id forgeos-fondo on 2>/dev/null || true
 exec --no-startup-id nm-applet 2>/dev/null || true
 exec --no-startup-id /usr/bin/lxqt-policykit-agent 2>/dev/null || true
 # Escritorio monitor al arrancar: espacio 1 a pantalla completa

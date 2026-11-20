@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# ForgeOS — fondo animado (v2) con mpv + xwinwrap, con feh de reserva.
+# El vídeo se genera en tu máquina con ffmpeg (aurora verde oscura, 20 s
+# en bucle) y vive en ~/.config/forgeos/fondo-animado.mp4.
+# Uso:
+#   forgeos-fondo on       # enciende el fondo animado
+#   forgeos-fondo off      # lo apaga y vuelve al fondo estático con feh
+#   forgeos-fondo toggle   # cambia entre on y off (lo usa el menú)
+#   forgeos-fondo status   # dice on u off
+#   forgeos-fondo generar  # crea el vídeo si no existe (con ffmpeg)
+# Si falta xwinwrap, mpv o el vídeo, no rompe nada: avisa y deja el fondo
+# estático con feh. Por eso se puede llamar al entrar a i3 sin miedo.
+set -euo pipefail
+
+VIDEO_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/forgeos"
+VIDEO="$VIDEO_DIR/fondo-animado.mp4"
+FOTO="$HOME/Imágenes/tu-foto.png"
+
+# fondo_estatico(): vuelve a poner el fondo con feh si hay foto.
+fondo_estatico() {
+  if command -v feh >/dev/null 2>&1 && [[ -f "$FOTO" ]]; then
+    feh --bg-fill "$FOTO" 2>/dev/null || true
+  fi
+}
+
+# esta_activo(): ¿hay un fondo animado corriendo ahora mismo?
+esta_activo() {
+  pgrep -f "fondo-animado.mp4" >/dev/null 2>&1
+}
+
+# generar(): crea el vídeo con ffmpeg si no existe. La fuente lavfi
+# "gradients" dibuja un degradado que rota despacio: colores oscuros
+# (negro, verdes oscuros, #00ff41), tipo radial, 20 segundos, 1280x720.
+generar() {
+  if [[ -f "$VIDEO" ]]; then
+    echo "forgeos-fondo: el vídeo ya existe en $VIDEO"
+    return 0
+  fi
+  if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "forgeos-fondo: ffmpeg no instalado, no puedo generar el vídeo" >&2
+    return 1
+  fi
+  mkdir -p "$VIDEO_DIR"
+  echo "forgeos-fondo: generando el vídeo (tarda un poco)..."
+  if ffmpeg -y -v error -f lavfi -i "gradients=s=1280x720:r=30:c0=000000:c1=001a00:c2=003300:c3=00ff41:nb_colors=4:duration=20:speed=0.03:type=1" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -an "$VIDEO"; then
+    echo "forgeos-fondo: vídeo listo en $VIDEO"
+    return 0
+  fi
+  echo "forgeos-fondo: ffmpeg falló; me quedo con el fondo estático" >&2
+  return 1
+}
+
+encender() {
+  if esta_activo; then
+    echo "forgeos-fondo: el fondo animado ya está encendido"
+    return 0
+  fi
+  if ! command -v xwinwrap >/dev/null 2>&1; then
+    echo "forgeos-fondo: xwinwrap no instalado (AUR); fondo estático con feh" >&2
+    fondo_estatico
+    return 0
+  fi
+  if ! command -v mpv >/dev/null 2>&1; then
+    echo "forgeos-fondo: mpv no instalado; fondo estático con feh" >&2
+    fondo_estatico
+    return 0
+  fi
+  if [[ ! -f "$VIDEO" ]]; then
+    echo "forgeos-fondo: no hay vídeo todavía; genera uno con 'forgeos-fondo generar'" >&2
+    fondo_estatico
+    return 0
+  fi
+  # xwinwrap dibuja la ventana del vídeo detrás de todo (-ov = ventana
+  # "override", -fs = a pantalla completa, -ni = sin entrada de teclado,
+  # -b = abajo del todo, -nf = sin foco, -un = sin decoración).
+  # WID lo sustituye xwinwrap por el número de la ventana que crea.
+  # mpv repite el vídeo en bucle (--loop), sin sonido ni controles.
+  xwinwrap -ov -fs -ni -b -nf -un -- mpv -wid WID --loop --no-audio \
+    --no-osc --no-osd-bar --really-quiet "$VIDEO" >/dev/null 2>&1 &
+  disown
+  echo "forgeos-fondo: fondo animado encendido"
+}
+
+apagar() {
+  # pkill -f busca el vídeo por su ruta en la línea de comandos: eso
+  # caza tanto a xwinwrap como a mpv, y solo a ellos, porque son los
+  # únicos que reproducen este archivo. Nunca mata un mpv tuyo a ciegas:
+  # si ves un vídeo con mpv, su ruta es otra y no coincide.
+  pkill -f "fondo-animado.mp4" 2>/dev/null || true
+  fondo_estatico
+  echo "forgeos-fondo: fondo animado apagado"
+}
+
+case "${1:-toggle}" in
+  on) encender ;;
+  off) apagar ;;
+  toggle)
+    if esta_activo; then apagar; else encender; fi
+    ;;
+  status)
+    if esta_activo; then echo "on"; else echo "off"; fi
+    ;;
+  generar) generar ;;
+  *)
+    echo "Uso: forgeos-fondo [on|off|toggle|status|generar]" >&2
+    exit 2
+    ;;
+esac

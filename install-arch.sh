@@ -119,6 +119,8 @@ log "2/6 Instalando Xorg, LightDM, i3 y utilidades..."
 # wireplumber = el sonido (en Arch no hay un paquete "pipewire-audio" como
 # en Debian: se instalan estos por separado). flameshot = capturas.
 # firefox = el navegador. thunar = el explorador de archivos.
+# mpv = reproductor de vídeo (fondo animado v2). ffmpeg = genera el vídeo
+# del fondo animado en tu máquina (aurora verde, 20 s en bucle).
 # ttf-jetbrains-mono = la fuente de la terminal. lxqt-policykit = que te
 # pida la contraseña cuando algo necesita permiso de administrador.
 # base-devel = compilador y herramientas para construir paquetes de AUR si
@@ -130,7 +132,7 @@ run pacman -S --noconfirm --needed \
   xorg-xrandr networkmanager network-manager-applet \
   bluez bluez-utils blueman pavucontrol \
   pipewire pipewire-pulse pipewire-alsa wireplumber \
-  flameshot firefox thunar ttf-jetbrains-mono lxqt-policykit \
+  flameshot firefox thunar mpv ffmpeg ttf-jetbrains-mono lxqt-policykit \
   base-devel git
 
 log "3/6 Herramientas de red / seguridad (opcionales, para tus pruebas)..."
@@ -171,7 +173,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
   # mkdir -p crea las carpetas de configuración si no existen.
   run mkdir -p "$USER_HOME/.config/i3" "$USER_HOME/.config/i3status" \
-    "$USER_HOME/.config/alacritty" "$USER_HOME/.config/rofi" "$USER_HOME/.config/picom"
+    "$USER_HOME/.config/alacritty" "$USER_HOME/.config/rofi" "$USER_HOME/.config/picom" \
+    "$USER_HOME/.config/forgeos"
   # Si ya tenías una config de i3, se guarda una copia de seguridad con la
   # fecha y hora en el nombre (config.bak-20261118-183000), antes de sobrescribirla.
   if [[ -f "$USER_HOME/.config/i3/config" ]]; then
@@ -202,6 +205,16 @@ if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
   # forgeos-bienvenida: la pantalla de bienvenida que se abre al entrar a i3.
   run cp "$SCRIPT_DIR/scripts/forgeos-bienvenida" /usr/local/bin/forgeos-bienvenida
   run chmod +x /usr/local/bin/forgeos-bienvenida
+  # forgeos-menu: el menú principal en rofi (Alt+Shift+N). forgeos-fondo:
+  # el fondo animado (mpv + xwinwrap). forgeos-atajos: la chuleta de
+  # atajos en rofi (Alt+Shift+A). Logo FORGEOS para la primera terminal.
+  run cp "$SCRIPT_DIR/scripts/forgeos-menu" /usr/local/bin/forgeos-menu
+  run chmod +x /usr/local/bin/forgeos-menu
+  run cp "$SCRIPT_DIR/scripts/forgeos-fondo" /usr/local/bin/forgeos-fondo
+  run chmod +x /usr/local/bin/forgeos-fondo
+  run cp "$SCRIPT_DIR/scripts/forgeos-atajos" /usr/local/bin/forgeos-atajos
+  run chmod +x /usr/local/bin/forgeos-atajos
+  run cp "$SCRIPT_DIR/config/forgeos/logo.txt" "$USER_HOME/.config/forgeos/logo.txt"
   run chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.config" 2>/dev/null || true
   # tmux útil: si no tienes .tmux.conf, se crea uno básico.
   if [[ ! -f "$USER_HOME/.tmux.conf" ]]; then
@@ -212,6 +225,80 @@ if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
         'bind | split-window -h' 'bind - split-window -v' > "$USER_HOME/.tmux.conf"
     fi
     run chown "$USER_NAME:$USER_NAME" "$USER_HOME/.tmux.conf" 2>/dev/null || true
+  fi
+fi
+
+log "Fondo animado y prompt multicolor (v2)..."
+# xwinwrap NO está en los repos oficiales, solo en el AUR. Se compila
+# con makepkg, que NO se puede correr como root: se corre como tu usuario
+# (sudo -u "$USER_NAME"), con base-devel, que ya se instaló en el paso 2/6.
+# Si falla el clonado o la compilación, el fondo animado queda apagado y
+# sigue el fondo estático con feh: nada de esto rompe la instalación.
+if command -v xwinwrap >/dev/null 2>&1; then
+  echo "xwinwrap ya está instalado."
+else
+  rm -rf /tmp/forgeos-xwinwrap
+  if $DRY_RUN; then
+    echo "[dry-run] git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap && makepkg -si (como $USER_NAME)"
+  elif sudo -u "$USER_NAME" git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap 2>/dev/null; then
+    sudo -u "$USER_NAME" bash -c 'cd /tmp/forgeos-xwinwrap && makepkg -si --noconfirm' 2>/dev/null \
+      || echo "Aviso: no se pudo compilar xwinwrap; el fondo animado quedará apagado (el resto sigue)."
+  else
+    echo "Aviso: no se pudo bajar xwinwrap del AUR; el fondo animado quedará apagado (el resto sigue)."
+  fi
+fi
+# Vídeo del fondo animado: se genera en tu máquina con ffmpeg, solo si
+# no existe. Tarda un poco; si falla, queda el fondo estático con feh.
+# env HOME="$USER_HOME": que forgeos-fondo escriba en tu casa, no en /root.
+if $DRY_RUN; then
+  echo "[dry-run] forgeos-fondo generar (como $USER_NAME)"
+else
+  sudo -u "$USER_NAME" env HOME="$USER_HOME" forgeos-fondo generar 2>/dev/null \
+    || echo "Aviso: no se pudo generar el vídeo del fondo; queda el fondo estático con feh."
+fi
+# Prompt multicolor en ~/.bashrc, solo si no está ya (por el marcador).
+# Usuario en verde, @ en amarillo, host en cian, ruta en azul, $ en verde.
+if $DRY_RUN; then
+  echo "[dry-run] añadir prompt ForgeOS a $USER_HOME/.bashrc (si no tiene el marcador)"
+else
+  if ! grep -q "ForgeOS prompt multicolor" "$USER_HOME/.bashrc" 2>/dev/null; then
+    cat >> "$USER_HOME/.bashrc" <<'BASHRC_EOF'
+
+# ForgeOS prompt multicolor
+# Usuario en verde, @ en amarillo, host en cian, ruta en azul, $ en verde.
+# \[...\] es "esto es color, no texto": sin eso, bash cuenta mal el largo
+# del prompt y la línea se rompe al escribir. \u = usuario, \h = equipo,
+# \w = carpeta actual, \$ = $ (o # si eres root).
+if [[ $- == *i* ]]; then
+  PS1='\[\e[1;32m\]\u\[\e[1;33m\]@\[\e[1;36m\]\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[1;32m\]\$ \[\e[0m\]'
+fi
+BASHRC_EOF
+    chown "$USER_NAME:$USER_NAME" "$USER_HOME/.bashrc" 2>/dev/null || true
+  fi
+fi
+# Logo FORGEOS + fastfetch en la primera terminal de cada arranque.
+if $DRY_RUN; then
+  echo "[dry-run] añadir logo de la primera terminal a $USER_HOME/.bashrc (si no tiene el marcador)"
+else
+  if ! grep -q "ForgeOS primera terminal" "$USER_HOME/.bashrc" 2>/dev/null; then
+    cat >> "$USER_HOME/.bashrc" <<'BASHRC_EOF'
+
+# ForgeOS primera terminal
+# Al abrir la primera terminal de cada arranque, muestra el logo FORGEOS
+# y los datos del sistema con fastfetch. El archivo /tmp/forgeos-... es
+# la marca de "ya se mostró": /tmp se vacía al reiniciar, así que cada
+# arranque lo muestra una sola vez y las demás terminales abren limpias.
+if [[ $- == *i* && ! -f /tmp/forgeos-fastfetch-mostrado ]]; then
+  if [[ -f "$HOME/.config/forgeos/logo.txt" ]]; then
+    printf '\033[1;32m'
+    cat "$HOME/.config/forgeos/logo.txt"
+    printf '\033[0m\n'
+  fi
+  command -v fastfetch >/dev/null 2>&1 && fastfetch --logo none 2>/dev/null || true
+  touch /tmp/forgeos-fastfetch-mostrado 2>/dev/null || true
+fi
+BASHRC_EOF
+    chown "$USER_NAME:$USER_NAME" "$USER_HOME/.bashrc" 2>/dev/null || true
   fi
 fi
 
@@ -367,4 +454,7 @@ echo "Para poner tu foto: feh --bg-fill ~/Imágenes/tu-foto.png"
 if [[ "$NO_SEGURIDAD" == false ]]; then
   echo "Seguridad: revisa el cortafuegos con 'sudo ufw status verbose' y abre Tor Browser con 'torbrowser-launcher'."
 fi
+echo "Menú ForgeOS: Alt+Shift+N (terminal, Firefox, InfoForge, Server-C, Metasploit, Wi-Fi, fondo animado, salir...)."
+echo "Prompt multicolor: abre una terminal nueva y verás usuario en verde, @ en amarillo, host en cian y ruta en azul."
+echo "Fondo animado: se enciende al entrar a i3; on/off desde el menú o con 'forgeos-fondo toggle'."
 echo "Server-C ya quedó en ~/Server-C: entra ahí y corre 'gcc -Wall -o servidor servidor.c && ./servidor' para probarlo en local."

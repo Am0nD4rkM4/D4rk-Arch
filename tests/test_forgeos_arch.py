@@ -2,7 +2,8 @@
 # Pruebas de ForgeOS para Arch.
 # Comprueban que los archivos existen, que los scripts pasan bash -n,
 # que la config de i3 pone el fondo con feh y no menciona apt, y que los scripts
-# son ejecutables. No instalan nada ni tocan el sistema.
+# son ejecutables. También comprueban la v2: menú en rofi, prompt multicolor,
+# fondo animado y actualizador idempotente. No instalan nada ni tocan el sistema.
 # Uso: python3 tests/test_forgeos_arch.py
 import os
 import subprocess
@@ -36,6 +37,7 @@ def main():
     # 1. Archivos que tienen que existir.
     esperados = [
         "install-arch.sh",
+        "update-d4rk-arch.sh",
         "README.md",
         "LICENSE",
         "config/i3/config",
@@ -43,19 +45,26 @@ def main():
         "config/alacritty/alacritty.toml",
         "config/rofi/config.rasi",
         "config/picom/picom.conf",
+        "config/forgeos/logo.txt",
         "scripts/forgeos-monitor",
         "scripts/forgeos-pantallas",
         "scripts/forgeos-quad",
         "scripts/forgeos-sysinfo",
         "scripts/forgeos-bienvenida",
+        "scripts/forgeos-menu",
+        "scripts/forgeos-fondo",
+        "scripts/forgeos-atajos",
     ]
     for ruta in esperados:
         comprobar(f"existe {ruta}", os.path.isfile(os.path.join(RAIZ, ruta)))
 
     # 2. Los scripts de bash pasan la comprobación de sintaxis (bash -n).
-    for ruta in ["install-arch.sh", "scripts/forgeos-monitor",
+    for ruta in ["install-arch.sh", "update-d4rk-arch.sh",
+                 "scripts/forgeos-monitor",
                  "scripts/forgeos-pantallas", "scripts/forgeos-quad",
-                 "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida"]:
+                 "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida",
+                 "scripts/forgeos-menu", "scripts/forgeos-fondo",
+                 "scripts/forgeos-atajos"]:
         completo = os.path.join(RAIZ, ruta)
         resultado = subprocess.run(["bash", "-n", completo],
                                    capture_output=True, text=True)
@@ -63,9 +72,12 @@ def main():
                   resultado.returncode == 0, resultado.stderr.strip())
 
     # 3. Los scripts son ejecutables.
-    for ruta in ["install-arch.sh", "scripts/forgeos-monitor",
+    for ruta in ["install-arch.sh", "update-d4rk-arch.sh",
+                 "scripts/forgeos-monitor",
                  "scripts/forgeos-pantallas", "scripts/forgeos-quad",
-                 "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida"]:
+                 "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida",
+                 "scripts/forgeos-menu", "scripts/forgeos-fondo",
+                 "scripts/forgeos-atajos"]:
         completo = os.path.join(RAIZ, ruta)
         comprobar(f"ejecutable {ruta}", os.access(completo, os.X_OK))
 
@@ -118,7 +130,7 @@ def main():
                     "network-manager-applet", "flameshot", "blueman",
                     "pavucontrol", "pipewire", "pipewire-pulse",
                     "wireplumber", "git", "base-devel",
-                    "xorg-server", "lightdm"]:
+                    "xorg-server", "lightdm", "mpv", "ffmpeg"]:
         comprobar(f"install-arch.sh instala {paquete}",
                   paquete in instalador)
 
@@ -205,6 +217,110 @@ def main():
               "Server-C ya existe en tu home" in instalador)
     comprobar("README menciona Server-C",
               "Server-C" in readme)
+
+    # 14. v2: menú ForgeOS en rofi con sus entradas en español.
+    menu = leer(os.path.join(RAIZ, "scripts/forgeos-menu"))
+    for entrada in ["Terminal", "Firefox", "Archivos", "InfoForge",
+                    "Server-C", "Metasploit", "Armitage", "Wi-Fi",
+                    "Bluetooth", "Volumen", "Fondo animado (on/off)",
+                    "Bienvenida", "Monitor", "Bloquear", "Salir de i3"]:
+        comprobar(f"menú tiene entrada '{entrada}'",
+                  f'"{entrada}"' in menu)
+    comprobar("menú usa rofi -dmenu",
+              "rofi -dmenu" in menu)
+    comprobar("menú lanza terminales con alacritty -e",
+              "alacritty" in menu and "-e" in menu)
+    comprobar("menú tiene Thunar para Archivos",
+              "thunar" in menu)
+    comprobar("menú tiene nmtui para Wi-Fi",
+              "nmtui" in menu)
+    comprobar("menú tiene i3lock para Bloquear",
+              "i3lock" in menu)
+    comprobar("menú llama a forgeos-fondo toggle",
+              "forgeos-fondo toggle" in menu)
+    comprobar("config i3 tiene atajo Alt+Shift+N para el menú",
+              "forgeos-menu" in config_i3 and "$mod+Shift+n" in config_i3)
+    comprobar("README documenta el menú (Alt+Shift+N)",
+              "Alt+Shift+N" in readme and "Menú ForgeOS" in readme)
+
+    # 15. v2: prompt multicolor en bash (usuario verde, @ amarillo,
+    # host cian, ruta azul, $ verde) con marcador idempotente.
+    comprobar("install-arch.sh añade el prompt multicolor a .bashrc",
+              "ForgeOS prompt multicolor" in instalador
+              and ".bashrc" in instalador)
+    comprobar("prompt: usuario verde (32), @ amarillo (33)",
+              "[1;32m" in instalador and "[1;33m" in instalador)
+    comprobar("prompt: host cian (36), ruta azul (34)",
+              "[1;36m" in instalador and "[1;34m" in instalador)
+    comprobar("prompt usa \\u, \\h y \\w",
+              "\\u" in instalador and "\\h" in instalador
+              and "\\w" in instalador)
+    comprobar("prompt solo se añade si no existe el marcador",
+              'grep -q "ForgeOS prompt multicolor"' in instalador)
+    actualizador = leer(os.path.join(RAIZ, "update-d4rk-arch.sh"))
+    comprobar("actualizador también añade el prompt multicolor",
+              "ForgeOS prompt multicolor" in actualizador)
+
+    # 16. v2: fondo animado con mpv + xwinwrap y vídeo generado con ffmpeg.
+    fondo = leer(os.path.join(RAIZ, "scripts/forgeos-fondo"))
+    comprobar("forgeos-fondo usa xwinwrap y mpv",
+              "xwinwrap" in fondo and "mpv" in fondo)
+    comprobar("forgeos-fondo genera el vídeo con ffmpeg (gradients)",
+              "ffmpeg" in fondo and "gradients" in fondo)
+    comprobar("forgeos-fondo apaga solo su instancia (pkill -f del vídeo)",
+              'pkill -f "fondo-animado.mp4"' in fondo)
+    comprobar("forgeos-fondo cae a feh si falta algo",
+              "fondo_estatico" in fondo and "feh --bg-fill" in fondo)
+    comprobar("forgeos-fondo tiene on/off/toggle/status/generar",
+              all(p in fondo for p in ["on)", "off)", "toggle)", "status)",
+                                          "generar)"]))
+    comprobar("install-arch.sh compila xwinwrap del AUR (makepkg -si)",
+              "aur.archlinux.org/xwinwrap.git" in instalador
+              and "makepkg -si" in instalador)
+    comprobar("config i3 arranca el fondo animado al entrar",
+              "forgeos-fondo on" in config_i3)
+    comprobar("README documenta el fondo animado",
+              "Fondo animado" in readme and "forgeos-fondo toggle" in readme)
+
+    # 17. v2: actualizador idempotente, sin reinstalar todo.
+    comprobar("actualizador instala solo mpv y ffmpeg",
+              "mpv ffmpeg" in actualizador)
+    comprobar("actualizador compila xwinwrap solo si falta",
+              "command -v xwinwrap" in actualizador)
+    comprobar("actualizador genera el vídeo solo si falta",
+              "forgeos-fondo generar" in actualizador)
+    comprobar("actualizador añade el atajo solo si no existe",
+              'grep -q "forgeos-menu"' in actualizador)
+    comprobar("actualizador hace copia de seguridad de la config de i3",
+              ".bak-" in actualizador and "cp \"$I3CONFIG\"" in actualizador)
+    comprobar("actualizador recarga i3 al final",
+              "i3-msg reload" in actualizador)
+    comprobar("actualizador NO reinstala todo (no ejecuta install-arch.sh)",
+              "bash install-arch.sh" not in actualizador
+              and "sudo bash install-arch.sh" not in actualizador)
+    comprobar("README documenta el actualizador",
+              "update-d4rk-arch.sh" in readme and "git pull" in readme)
+
+    # 18. v2: sorpresas extra discretas y que no vuelvan nitrogen/neofetch.
+    atajos = leer(os.path.join(RAIZ, "scripts/forgeos-atajos"))
+    comprobar("chuleta de atajos usa rofi -dmenu",
+              "rofi -dmenu" in atajos)
+    comprobar("chuleta de atajos lista el menú y la bienvenida",
+              "Alt+Shift+N" in atajos and "Alt+Shift+B" in atajos)
+    comprobar("config i3 tiene atajo Alt+Shift+A para la chuleta",
+              "forgeos-atajos" in config_i3 and "$mod+Shift+a" in config_i3)
+    logo = leer(os.path.join(RAIZ, "config/forgeos/logo.txt"))
+    comprobar("logo FORGEOS existe (banner ASCII)",
+              "|  ____/ _" in logo and "|_|" in logo)
+    comprobar("primera terminal: logo + fastfetch solo una vez por arranque",
+              "ForgeOS primera terminal" in instalador
+              and "forgeos-fastfetch-mostrado" in instalador
+              and "fastfetch --logo none" in instalador)
+    for ruta in ["scripts/forgeos-menu", "scripts/forgeos-fondo",
+                 "scripts/forgeos-atajos", "update-d4rk-arch.sh"]:
+        texto = leer(os.path.join(RAIZ, ruta))
+        comprobar(f"{ruta} no trae de vuelta nitrogen ni neofetch",
+                  "nitrogen" not in texto and "neofetch" not in texto)
 
     # Resumen final.
     print(f"\n{PASADAS} pasadas, {len(FALLADAS)} falladas")

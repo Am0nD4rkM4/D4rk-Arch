@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# ForgeOS — menú principal en rofi (Alt+Shift+N)
+# Lista en español de lo que más usa Luis: terminales, Firefox, archivos,
+# InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth, volumen,
+# fondo animado, bienvenida, monitor, bloquear y salir de i3.
+# Las apps de terminal se lanzan con alacritty -e <comando>.
+# Uso: forgeos-menu (desde i3 con Alt+Shift+N)
+set -euo pipefail
+
+TERM_CMD="${TERMINAL:-alacritty}"
+
+# lanzar(): corre un programa en segundo plano y sigue, sin esperar a que
+# se cierre. nohup evita que se muera al salir el menú; >/dev/null 2>&1
+# tira su salida a la basura para no ensuciar la terminal.
+lanzar() {
+  nohup "$@" >/dev/null 2>&1 & disown
+}
+
+# avisar(): mensaje en rofi cuando algo no está instalado.
+avisar() {
+  rofi -e "$1" 2>/dev/null || echo "forgeos-menu: $1" >&2
+}
+
+if ! command -v rofi >/dev/null 2>&1; then
+  echo "forgeos-menu: rofi no instalado" >&2
+  exit 1
+fi
+
+# La lista: cada línea es una entrada del menú, en el orden que se muestra.
+# -dmenu lee las líneas por la entrada estándar; -i ignora mayúsculas al
+# buscar; -p pone el título. Si se pulsa Escape, rofi no devuelve nada
+# y el menú se cierra sin hacer nada.
+ELEGIDO="$(printf '%s\n' \
+  "Terminal" \
+  "Firefox" \
+  "Archivos" \
+  "InfoForge" \
+  "Server-C" \
+  "Metasploit" \
+  "Armitage" \
+  "Wi-Fi" \
+  "Bluetooth" \
+  "Volumen" \
+  "Fondo animado (on/off)" \
+  "Bienvenida" \
+  "Monitor" \
+  "Bloquear" \
+  "Salir de i3" \
+  | rofi -dmenu -i -p "ForgeOS" 2>/dev/null)" || true
+
+# Si no se eligió nada (Escape), salir sin hacer nada.
+[[ -z "${ELEGIDO:-}" ]] && exit 0
+
+case "$ELEGIDO" in
+  "Terminal")
+    lanzar "$TERM_CMD"
+    ;;
+  "Firefox")
+    lanzar firefox
+    ;;
+  "Archivos")
+    lanzar thunar
+    ;;
+  "InfoForge")
+    lanzar "$TERM_CMD" -e bash -c 'cd ~/InfoForge 2>/dev/null || cd ~/infoforge-linux 2>/dev/null || cd /opt/infoforge; python3 infoforge.py interactive; exec bash'
+    ;;
+  "Server-C")
+    lanzar "$TERM_CMD" -e bash -c 'cd ~/Server-C 2>/dev/null || exit 1; exec bash'
+    ;;
+  "Metasploit")
+    if command -v msfconsole >/dev/null 2>&1; then
+      lanzar "$TERM_CMD" -e msfconsole
+    else
+      avisar "Metasploit no instalado: corre 'sudo pacman -S metasploit armitage'"
+    fi
+    ;;
+  "Armitage")
+    if command -v armitage >/dev/null 2>&1; then
+      lanzar armitage
+    else
+      avisar "Armitage no instalado: corre 'sudo pacman -S metasploit armitage'"
+    fi
+    ;;
+  "Wi-Fi")
+    lanzar "$TERM_CMD" -e nmtui
+    ;;
+  "Bluetooth")
+    lanzar blueman-manager
+    ;;
+  "Volumen")
+    lanzar pavucontrol
+    ;;
+  "Fondo animado (on/off)")
+    forgeos-fondo toggle 2>/dev/null || avisar "forgeos-fondo no encontrado: actualiza D4rk-Arch con update-d4rk-arch.sh"
+    ;;
+  "Bienvenida")
+    lanzar "$TERM_CMD" -e forgeos-bienvenida
+    ;;
+  "Monitor")
+    forgeos-monitor 2>/dev/null || avisar "forgeos-monitor no encontrado"
+    ;;
+  "Bloquear")
+    lanzar i3lock -c 000000
+    ;;
+  "Salir de i3")
+    i3-nagbar -t warning -m '¿Salir de i3?' -B 'Sí, salir' 'i3-msg exit' 2>/dev/null || true
+    ;;
+esac

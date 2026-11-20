@@ -88,6 +88,24 @@ Al entrar a i3 se abre una terminal de bienvenida con el banner del sistema y un
 
 Con dos pantallas (laptop + monitor externo), al arrancar el espacio 1 con el monitor va a la **pantalla de la derecha**, y tú trabajas en la laptop (espacio 2).
 
+## Novedades v2
+
+Si ya tienes la v1 instalada, no hace falta reinstalar nada: actualiza con el actualizador (ver abajo).
+
+- **Menú ForgeOS** con `Alt+Shift+N`: terminal, Firefox, archivos, InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth, volumen, fondo animado, bienvenida, monitor, bloquear y salir de i3. Todo en español, en rofi con el tema verde.
+- **Prompt multicolor** en la terminal: el usuario en verde, el `@` en amarillo, el host en cian, la ruta en azul y el `$` en verde. Se ve al abrir una terminal nueva.
+- **Fondo animado**: un vídeo en bucle de aurora verde oscura, generado en tu máquina con ffmpeg, que se mueve detrás de las ventanas con mpv + xwinwrap. Se enciende solo al entrar a i3. Se apaga y se enciende desde el menú, o con `forgeos-fondo toggle` (también `forgeos-fondo on` y `forgeos-fondo off`). Si algo falla (xwinwrap, mpv o el vídeo), queda el fondo estático con `feh`, sin romper nada.
+- **Actualizador**: si ya tienes la v1, no reinstales todo. En tu clon del repo:
+
+```bash
+cd ~/D4rk-Arch && git pull
+bash update-d4rk-arch.sh
+```
+
+El actualizador instala solo lo nuevo (mpv, ffmpeg, xwinwrap del AUR, los scripts nuevos), genera el vídeo si falta, añade los atajos nuevos a tu config de i3 sin borrar lo que tengas, pone el prompt multicolor en `~/.bashrc` y recarga i3. Se puede correr varias veces: lo que ya está hecho se salta solo.
+
+Y algún detalle más por descubrir.
+
 ## Espacios de trabajo
 
 | Espacio | Para qué |
@@ -108,6 +126,7 @@ Con dos pantallas (laptop + monitor externo), al arrancar el espacio 1 con el mo
 | `Alt+Shift+Return` | Terminal con tmux |
 | `Alt+T` | **4 terminales en mosaico** (espacio 2) |
 | `Alt+D` | Lanzador rofi |
+| `Alt+Shift+N` | **Menú ForgeOS** (terminal, Firefox, InfoForge, Server-C, Metasploit, Wi-Fi, fondo animado...) |
 | `Alt+I` | InfoForge interactivo |
 | `Alt+Shift+I` | InfoForge — sistema local |
 | `Alt+H/J/K/L` o flechas | Moverse entre ventanas |
@@ -138,6 +157,14 @@ feh --bg-fill ~/Imágenes/tu-foto.png
 ```
 
 Esa línea ya está en la config de i3, así que el fondo se pone solo al entrar. Si cambias de foto, corre ese comando con el nombre nuevo.
+
+### Fondo animado (v2)
+
+Además del fondo estático, la v2 trae un fondo animado: un vídeo en bucle de aurora verde oscura (generado en tu máquina con `ffmpeg`, `~/.config/forgeos/fondo-animado.mp4`), que se mueve detrás de las ventanas con `mpv` + `xwinwrap` (este último solo está en el AUR y se compila al instalar o actualizar).
+
+- Se enciende solo al entrar a i3. Para apagarlo o encenderlo: menú ForgeOS (`Alt+Shift+N`, "Fondo animado (on/off)") o en terminal: `forgeos-fondo toggle` (también `on`, `off` y `status`).
+- Si el vídeo no existe, se genera con `forgeos-fondo generar` (tarda un poco).
+- Si falta xwinwrap, mpv o el vídeo, el script avisa y deja el fondo estático con `feh`: nunca rompe el inicio de sesión.
 
 ## Tus herramientas de Kali en Arch
 
@@ -199,6 +226,7 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 ## Qué lleva preinstalado
 
 - **Escritorio:** i3, i3status, i3lock, rofi, picom, feh, LightDM
+- **Menú y fondo (v2):** `forgeos-menu` (Alt+Shift+N), `forgeos-fondo` (fondo animado con mpv + xwinwrap del AUR, vídeo generado con ffmpeg), prompt multicolor en bash
 - **Monitor:** btop, fastfetch, `forgeos-monitor`, `forgeos-sysinfo`
 - **Terminal:** Alacritty (JetBrains Mono), verde `#00ff41` sobre negro, translúcida (opacity 0.80), tmux
 - **Sistema:** htop, btop, NetworkManager, Bluetooth, PipeWire, brightnessctl
@@ -215,19 +243,24 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 forgeos-arch/
 ├── README.md
 ├── install-arch.sh       # Arch base -> ForgeOS para Arch
+├── update-d4rk-arch.sh   # Actualiza una v1 ya instalada a la v2 (sin reinstalar todo)
 ├── LICENSE               # licencia exclusiva de Luis Antonio Angel Alencastro
 ├── config/
 │   ├── i3/config
 │   ├── i3status/config
 │   ├── alacritty/alacritty.toml
 │   ├── rofi/config.rasi
-│   └── picom/picom.conf
+│   ├── picom/picom.conf
+│   └── forgeos/logo.txt  # logo FORGEOS de la primera terminal (v2)
 ├── scripts/
 │   ├── forgeos-quad      # abre 4 terminales en mosaico (espacio 2)
 │   ├── forgeos-monitor   # monitor a pantalla completa en el espacio 1
 │   ├── forgeos-pantallas # dos pantallas: espacio 1 a la pantalla derecha
 │   ├── forgeos-sysinfo   # usuario, uptime, RAM, disco, IP
-│   └── forgeos-bienvenida # banner + resumen al entrar a i3
+│   ├── forgeos-bienvenida # banner + resumen al entrar a i3
+│   ├── forgeos-menu      # menú principal en rofi (v2, Alt+Shift+N)
+│   ├── forgeos-fondo     # fondo animado on/off (v2)
+│   └── forgeos-atajos    # chuleta de atajos en rofi (v2, Alt+Shift+A)
 └── tests/test_forgeos_arch.py
 ```
 
