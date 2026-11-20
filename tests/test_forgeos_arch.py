@@ -158,6 +158,13 @@ def main():
     rofi = leer(os.path.join(RAIZ, "config/rofi/config.rasi"))
     comprobar("rofi tema verde hacker",
               "#00ff41" in rofi and "#000000" in rofi)
+    # El parser de rofi NO acepta el atajo CSS "border: 2px solid @color":
+    # el ancho va en "border:" y el color en "border-color:" por separado.
+    # (En la laptop de Luis esto tumbaba rofi y con él Alt+D y Alt+Shift+N.)
+    comprobar("rofi sin border CSS con referencia (@color)",
+              "solid @" not in rofi)
+    comprobar("rofi color de borde en border-color",
+              "border-color: @selected;" in rofi)
     i3status = leer(os.path.join(RAIZ, "config/i3status/config"))
     comprobar("i3status color bueno #00ff41",
               '#00ff41' in i3status)

@@ -16,7 +16,8 @@ configuration {
 }
 window {
     background-color: @background;
-    border: 2px solid @selected;
+    border: 2px;
+    border-color: @selected;
     border-radius: 10px;
     width: 600px;
 }
