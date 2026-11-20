@@ -294,6 +294,16 @@ def main():
               "mpv ffmpeg" in actualizador)
     comprobar("actualizador compila xwinwrap solo si falta",
               "command -v xwinwrap" in actualizador)
+    # Si makepkg falta, el actualizador instala base-devel antes de
+    # compilar; y los errores del clon y de makepkg se ven, no se tragan
+    # con 2>/dev/null (en la laptop de Luis la compilación falló en
+    # silencio y el fondo quedó apagado sin saberse por qué).
+    comprobar("actualizador instala base-devel si falta makepkg",
+              "command -v makepkg" in actualizador
+              and "base-devel git" in actualizador)
+    comprobar("actualizador no traga los errores de xwinwrap",
+              "makepkg -si --noconfirm) 2>/dev/null" not in actualizador
+              and "xwinwrap.git /tmp/forgeos-xwinwrap 2>/dev/null" not in actualizador)
     comprobar("actualizador genera el vídeo solo si falta",
               "forgeos-fondo generar" in actualizador)
     comprobar("actualizador añade el atajo solo si no existe",

@@ -31,23 +31,30 @@ fi
 sudo -v || true
 
 log "1/6 Paquetes nuevos de la v2 (mpv y ffmpeg, repos oficiales)..."
-# --needed: si ya están, no los baja de nuevo.
-sudo pacman -S --noconfirm --needed mpv ffmpeg 2>/dev/null \
+# --needed: si ya están, no los baja de nuevo. Sin 2>/dev/null: si falla,
+# el error real tiene que verse, no un "Aviso" genérico.
+sudo pacman -S --noconfirm --needed mpv ffmpeg \
   || echo "Aviso: no se pudieron instalar mpv/ffmpeg; el fondo animado quedará apagado (el resto sigue)."
 
 log "2/6 xwinwrap (AUR) solo si falta..."
 # xwinwrap NO está en los repos oficiales, solo en el AUR. Se compila
 # con makepkg, que NO se puede correr como root: se corre como tu usuario.
-# base-devel (que ya trae el instalador v1) trae lo necesario para compilar.
+# makepkg necesita base-devel; el instalador v1 ya lo trae, pero si por
+# lo que sea falta, se instala aquí antes de compilar. Sin 2>/dev/null:
+# si el clon o la compilación fallan, el error real tiene que verse.
 if command -v xwinwrap >/dev/null 2>&1; then
   echo "xwinwrap ya está instalado, lo salto."
 else
+  if ! command -v makepkg >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm --needed base-devel git \
+      || echo "Aviso: no se pudo instalar base-devel; el fondo animado quedará apagado."
+  fi
   rm -rf /tmp/forgeos-xwinwrap
-  if git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap 2>/dev/null; then
-    (cd /tmp/forgeos-xwinwrap && makepkg -si --noconfirm) 2>/dev/null \
+  if git clone https://aur.archlinux.org/xwinwrap.git /tmp/forgeos-xwinwrap; then
+    (cd /tmp/forgeos-xwinwrap && makepkg -si --noconfirm) \
       || echo "Aviso: no se pudo compilar xwinwrap; el fondo animado quedará apagado (el resto sigue)."
   else
-    echo "Aviso: no se pudo bajar xwinwrap del AUR; el fondo animado quedará apagado (el resto sigue)."
+    echo "Aviso: no se pudo bajar xwinwrap del AUR; revisa tu internet y corre el actualizador de nuevo."
   fi
 fi
 
