@@ -54,6 +54,7 @@ def main():
         "scripts/forgeos-menu",
         "scripts/forgeos-fondo",
         "scripts/forgeos-atajos",
+        "scripts/instalar-herramientas-kali.sh",
     ]
     for ruta in esperados:
         comprobar(f"existe {ruta}", os.path.isfile(os.path.join(RAIZ, ruta)))
@@ -64,7 +65,8 @@ def main():
                  "scripts/forgeos-pantallas", "scripts/forgeos-quad",
                  "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida",
                  "scripts/forgeos-menu", "scripts/forgeos-fondo",
-                 "scripts/forgeos-atajos"]:
+                 "scripts/forgeos-atajos",
+                 "scripts/instalar-herramientas-kali.sh"]:
         completo = os.path.join(RAIZ, ruta)
         resultado = subprocess.run(["bash", "-n", completo],
                                    capture_output=True, text=True)
@@ -77,7 +79,8 @@ def main():
                  "scripts/forgeos-pantallas", "scripts/forgeos-quad",
                  "scripts/forgeos-sysinfo", "scripts/forgeos-bienvenida",
                  "scripts/forgeos-menu", "scripts/forgeos-fondo",
-                 "scripts/forgeos-atajos"]:
+                 "scripts/forgeos-atajos",
+                 "scripts/instalar-herramientas-kali.sh"]:
         completo = os.path.join(RAIZ, ruta)
         comprobar(f"ejecutable {ruta}", os.access(completo, os.X_OK))
 
@@ -227,10 +230,11 @@ def main():
 
     # 14. v2: menú ForgeOS en rofi con sus entradas en español.
     menu = leer(os.path.join(RAIZ, "scripts/forgeos-menu"))
-    for entrada in ["Terminal", "Firefox", "Archivos", "InfoForge",
-                    "Server-C", "Metasploit", "Armitage", "Wi-Fi",
-                    "Bluetooth", "Volumen", "Fondo animado (on/off)",
-                    "Bienvenida", "Monitor", "Bloquear", "Salir de i3"]:
+    for entrada in ["Terminal", "Firefox", "Tor Browser", "Archivos",
+                    "InfoForge", "Server-C", "Metasploit", "Armitage",
+                    "Wi-Fi", "Bluetooth", "Volumen",
+                    "Fondo animado (on/off)", "Bienvenida", "Monitor",
+                    "Bloquear", "Salir de i3"]:
         comprobar(f"menú tiene entrada '{entrada}'",
                   f'"{entrada}"' in menu)
     comprobar("menú usa rofi -dmenu",
@@ -245,6 +249,10 @@ def main():
               "i3lock" in menu)
     comprobar("menú llama a forgeos-fondo toggle",
               "forgeos-fondo toggle" in menu)
+    comprobar("menú tiene entrada 'Tor Browser' (después de Firefox)",
+              '"Tor Browser"' in menu)
+    comprobar("menú lanza Tor Browser con torbrowser-launcher",
+              "torbrowser-launcher" in menu)
     comprobar("config i3 tiene atajo Alt+Shift+N para el menú",
               "forgeos-menu" in config_i3 and "$mod+Shift+n" in config_i3)
     comprobar("README documenta el menú (Alt+Shift+N)",
@@ -347,6 +355,41 @@ def main():
         texto = leer(os.path.join(RAIZ, ruta))
         comprobar(f"{ruta} no trae de vuelta nitrogen ni neofetch",
                   "nitrogen" not in texto and "neofetch" not in texto)
+
+    # 19. Script de herramientas de Kali: instala la selección curada
+    # de herramientas de auditoría (repos oficiales + BlackArch + AUR),
+    # con sudo, BlackArch por strap.sh, yay si falta, --needed y
+    # verificación final de cada herramienta.
+    kali_ruta = os.path.join(RAIZ, "scripts/instalar-herramientas-kali.sh")
+    # Si el script no existe, kali queda vacío y las pruebas de abajo
+    # fallan una por una (la de "existe" ya lo avisó en la sección 1),
+    # en vez de romper toda la suite con FileNotFoundError.
+    kali = leer(kali_ruta) if os.path.isfile(kali_ruta) else ""
+    comprobar("script kali exige correr con sudo/root",
+              "SUDO_USER" in kali and "EUID" in kali)
+    comprobar("script kali añade BlackArch con strap.sh oficial",
+              "strap.sh" in kali and "blackarch.org" in kali)
+    comprobar("script kali instala yay si falta (AUR)",
+              "yay" in kali and "yay-bin" in kali)
+    comprobar("script kali actualiza antes con pacman -Syu",
+              "pacman -Syu" in kali)
+    comprobar("script kali usa --needed para no reinstalar",
+              "--needed" in kali)
+    comprobar("script kali instala el AUR como el usuario normal",
+              'sudo -u "$SUDO_USER" yay' in kali)
+    comprobar("script kali avisa que tarda y ocupa varios GB",
+              "varios GB" in kali)
+    comprobar("script kali verifica cada herramienta con command -v",
+              "command -v" in kali)
+    comprobar("script kali tiene categorías de herramientas",
+              all(c in kali for c in ["Reconocimiento", "Web",
+                                      "Contraseñas", "Wi-Fi", "Forense",
+                                      "Wordlists"]))
+    comprobar("script kali no reinstala metasploit (ya va con --con-blackarch)",
+              "metasploit" in kali.lower()
+              and "con-blackarch" in kali.lower())
+    comprobar("README documenta el script de herramientas de Kali",
+              "instalar-herramientas-kali.sh" in readme)
 
     # Resumen final.
     print(f"\n{PASADAS} pasadas, {len(FALLADAS)} falladas")

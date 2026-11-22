@@ -30,11 +30,14 @@ fi
 # los sudo de abajo no te la pidan a cada rato.
 sudo -v || true
 
-log "1/6 Paquetes nuevos de la v2 (mpv y ffmpeg, repos oficiales)..."
-# --needed: si ya están, no los baja de nuevo. Sin 2>/dev/null: si falla,
-# el error real tiene que verse, no un "Aviso" genérico.
-sudo pacman -S --noconfirm --needed mpv ffmpeg \
-  || echo "Aviso: no se pudieron instalar mpv/ffmpeg; el fondo animado quedará apagado (el resto sigue)."
+log "1/6 Paquetes nuevos (mpv, ffmpeg y torbrowser-launcher, repos oficiales)..."
+# --needed: si ya están, no los baja de nuevo. torbrowser-launcher va aquí
+# (y no solo en el paso 7/7 del instalador) para que la entrada "Tor Browser"
+# del menú funcione aunque la instalación se saltara la seguridad
+# (--no-seguridad). Sin 2>/dev/null: si falla, el error real tiene que
+# verse, no un "Aviso" genérico.
+sudo pacman -S --noconfirm --needed mpv ffmpeg torbrowser-launcher \
+  || echo "Aviso: no se pudieron instalar mpv/ffmpeg/torbrowser-launcher; el fondo animado y el Tor Browser quedarán apagados (el resto sigue)."
 
 log "2/6 xwinwrap (solo si falta; desde GitHub, no del AUR)..."
 # El paquete `xwinwrap` del AUR ya no existe (su repo git viene vacío).
@@ -63,7 +66,8 @@ log "3/6 Copiando los scripts nuevos a /usr/local/bin..."
 sudo cp "$SCRIPT_DIR/scripts/forgeos-menu" /usr/local/bin/forgeos-menu
 sudo cp "$SCRIPT_DIR/scripts/forgeos-fondo" /usr/local/bin/forgeos-fondo
 sudo cp "$SCRIPT_DIR/scripts/forgeos-atajos" /usr/local/bin/forgeos-atajos
-sudo chmod +x /usr/local/bin/forgeos-menu /usr/local/bin/forgeos-fondo /usr/local/bin/forgeos-atajos
+sudo cp "$SCRIPT_DIR/scripts/instalar-herramientas-kali.sh" /usr/local/bin/instalar-herramientas-kali.sh
+sudo chmod +x /usr/local/bin/forgeos-menu /usr/local/bin/forgeos-fondo /usr/local/bin/forgeos-atajos /usr/local/bin/instalar-herramientas-kali.sh
 
 log "4/6 Logo FORGEOS y vídeo del fondo animado..."
 mkdir -p "$HOME/.config/forgeos"
@@ -178,7 +182,8 @@ fi
 
 echo
 echo "Listo: D4rk-Arch v2."
-echo "- Menú ForgeOS: Alt+Shift+N"
+echo "- Menú ForgeOS: Alt+Shift+N (ahora con Tor Browser)"
+echo "- Herramientas de Kali: sudo instalar-herramientas-kali.sh (94 herramientas, tarda y ocupa varios GB)"
 echo "- Prompt multicolor: abre una terminal nueva para verlo."
 echo "- Fondo animado: se enciende al entrar; on/off desde el menú o con 'forgeos-fondo toggle'."
 echo "- Si algo del fondo falla, queda el fondo estático con feh, sin romper nada."

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ForgeOS — menú principal en rofi (Alt+Shift+N)
-# Lista en español de lo que más usa Luis: terminales, Firefox, archivos,
-# InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth, volumen,
-# fondo animado, bienvenida, monitor, bloquear y salir de i3.
-# Las apps de terminal se lanzan con alacritty -e <comando>.
+# Lista en español de lo que más usa Luis: terminales, Firefox, Tor Browser,
+# archivos, InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth,
+# volumen, fondo animado, bienvenida, monitor, bloquear y salir de i3.
+# Son 16 entradas. Las apps de terminal se lanzan con alacritty -e <comando>.
 # Uso: forgeos-menu (desde i3 con Alt+Shift+N)
 set -euo pipefail
 
@@ -33,6 +33,7 @@ fi
 ELEGIDO="$(printf '%s\n' \
   "Terminal" \
   "Firefox" \
+  "Tor Browser" \
   "Archivos" \
   "InfoForge" \
   "Server-C" \
@@ -57,6 +58,15 @@ case "$ELEGIDO" in
     ;;
   "Firefox")
     lanzar firefox
+    ;;
+  "Tor Browser")
+    # torbrowser-launcher descarga y verifica el Tor Browser oficial la
+    # primera vez (tarda un poco); después lo abre directo.
+    if command -v torbrowser-launcher >/dev/null 2>&1; then
+      lanzar torbrowser-launcher
+    else
+      avisar "Tor Browser no instalado: corre 'sudo pacman -S torbrowser-launcher'"
+    fi
     ;;
   "Archivos")
     lanzar thunar

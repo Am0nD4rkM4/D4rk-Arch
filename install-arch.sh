@@ -214,6 +214,10 @@ if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
   run chmod +x /usr/local/bin/forgeos-fondo
   run cp "$SCRIPT_DIR/scripts/forgeos-atajos" /usr/local/bin/forgeos-atajos
   run chmod +x /usr/local/bin/forgeos-atajos
+  # instalar-herramientas-kali.sh: instala las herramientas de Kali más
+  # usadas (repos oficiales + BlackArch + AUR). Se corre aparte con sudo.
+  run cp "$SCRIPT_DIR/scripts/instalar-herramientas-kali.sh" /usr/local/bin/instalar-herramientas-kali.sh
+  run chmod +x /usr/local/bin/instalar-herramientas-kali.sh
   run cp "$SCRIPT_DIR/config/forgeos/logo.txt" "$USER_HOME/.config/forgeos/logo.txt"
   run chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.config" 2>/dev/null || true
   # tmux útil: si no tienes .tmux.conf, se crea uno básico.

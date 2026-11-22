@@ -92,7 +92,7 @@ Con dos pantallas (laptop + monitor externo), al arrancar el espacio 1 con el mo
 
 Si ya tienes la v1 instalada, no hace falta reinstalar nada: actualiza con el actualizador (ver abajo).
 
-- **Menú ForgeOS** con `Alt+Shift+N`: terminal, Firefox, archivos, InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth, volumen, fondo animado, bienvenida, monitor, bloquear y salir de i3. Todo en español, en rofi con el tema verde.
+- **Menú ForgeOS** con `Alt+Shift+N`: 16 entradas: terminal, Firefox, Tor Browser, archivos, InfoForge, Server-C, Metasploit, Armitage, Wi-Fi, Bluetooth, volumen, fondo animado, bienvenida, monitor, bloquear y salir de i3. Todo en español, en rofi con el tema verde.
 - **Prompt multicolor** en la terminal: el usuario en verde, el `@` en amarillo, el host en cian, la ruta en azul y el `$` en verde. Se ve al abrir una terminal nueva.
 - **Fondo animado**: un vídeo en bucle de aurora verde oscura, generado en tu máquina con ffmpeg, que se mueve detrás de las ventanas con mpv + xwinwrap. Se enciende solo al entrar a i3. Se apaga y se enciende desde el menú, o con `forgeos-fondo toggle` (también `forgeos-fondo on` y `forgeos-fondo off`). Si algo falla (xwinwrap, mpv o el vídeo), queda el fondo estático con `feh`, sin romper nada.
 - **Actualizador**: si ya tienes la v1, no reinstales todo. En tu clon del repo:
@@ -126,7 +126,7 @@ Y algún detalle más por descubrir.
 | `Alt+Shift+Return` | Terminal con tmux |
 | `Alt+T` | **4 terminales en mosaico** (espacio 2) |
 | `Alt+D` | Lanzador rofi |
-| `Alt+Shift+N` | **Menú ForgeOS** (terminal, Firefox, InfoForge, Server-C, Metasploit, Wi-Fi, fondo animado...) |
+| `Alt+Shift+N` | **Menú ForgeOS** (terminal, Firefox, Tor Browser, InfoForge, Server-C, Metasploit, Wi-Fi, fondo animado...) |
 | `Alt+I` | InfoForge interactivo |
 | `Alt+Shift+I` | InfoForge — sistema local |
 | `Alt+H/J/K/L` o flechas | Moverse entre ventanas |
@@ -209,7 +209,7 @@ sudo pacman -S tor torbrowser-launcher
 torbrowser-launcher
 ```
 
-La primera vez tarda porque descarga el navegador. Después lo abres igual. Tor es más lento que Firefox normal porque tu tráfico pasa por varios relevos, y algunas páginas bloquean las salidas de Tor. Es para navegar con privacidad, no para el día a día.
+La primera vez tarda porque descarga el navegador. Después lo abres igual. También está en el menú ForgeOS (`Alt+Shift+N` → "Tor Browser"). Tor es más lento que Firefox normal porque tu tráfico pasa por varios relevos, y algunas páginas bloquean las salidas de Tor. Es para navegar con privacidad, no para el día a día.
 
 ## BlackArch: Metasploit y Armitage (opcional, solo con `--con-blackarch`)
 
@@ -223,6 +223,41 @@ Eso añade BlackArch y luego instala `metasploit` (`msfconsole`) y `armitage` (s
 
 Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (opcional, no se instala por defecto): es un repositorio aparte con miles de herramientas de seguridad para Arch. Si algún día lo quieres, se añade siguiendo su guía oficial (blackarch.org), pero no hace falta para empezar.
 
+## Herramientas de Kali (instalador automático)
+
+Si quieres las herramientas de Kali más usadas sin instalar todo Kali ni todo BlackArch (eso son decenas de GB), hay un script curado: `scripts/instalar-herramientas-kali.sh`. Instala **94 herramientas** de auditoría y pentesting, agrupadas por categoría:
+
+- **Reconocimiento (15):** theharvester, dnsrecon, dnsenum, fierce, subfinder, amass, httpx, naabu, masscan, rustscan, zmap, sherlock, holehe, recon-ng, spiderfoot
+- **Web (19):** sqlmap, nikto, gobuster, ffuf, dirb, dirsearch, feroxbuster, wfuzz, nuclei, wpscan, whatweb, wafw00f, testssl.sh, sslscan, commix, xsstrike, dalfox, zaproxy (OWASP ZAP), burpsuite
+- **Explotación (8):** exploitdb, routersploit, beef, veil, empire, sliver, chisel, ligolo-ng
+- **Contraseñas (7):** medusa, ncrack, crunch, cewl, cupp, hashcat-utils, hashid
+- **Red (11):** socat, proxychains-ng, kismet, ettercap, bettercap, mitmproxy, mitm6, responder, dsniff, ngrep, termshark
+- **Wi-Fi (8):** hcxtools, hcxdumptool, cowpatty, reaver, bully, pixiewps, mdk4, wifite
+- **Forense (11):** binwalk, foremost, scalpel, exiftool, steghide, volatility3, sleuthkit, yara, ghidra, radare2, gdb
+- **Active Directory y Windows (11):** impacket, netexec, bloodhound, bloodhound-python, certipy, coercer, enum4linux-ng, smbmap, evil-winrm, smbclient, kerbrute
+- **Wordlists (2):** seclists, rockyou
+- **Miscelánea (2):** pspy, gitleaks
+
+De dónde sale cada una (nombres verificados en archlinux.org, la lista de paquetes de BlackArch y el AUR): **44 de los repos oficiales de Arch, 49 de BlackArch y 1 del AUR** (rockyou). Además descarga linpeas y winpeas desde su GitHub oficial a `~/herramientas/linpeas/`.
+
+Se corre así (desde el clon del repo, o desde cualquier lado si ya actualizaste, porque también queda en `/usr/local/bin`):
+
+```bash
+cd ~/D4rk-Arch && sudo bash scripts/instalar-herramientas-kali.sh
+```
+
+El script te avisa antes de empezar: **tarda bastante (de 30 minutos a un par de horas) y ocupa varios GB** (ZAP, Burp, Ghidra y BloodHound son pesados). Deja la laptop enchufada. Es idempotente: si se corta, lo vuelves a correr y salta lo que ya está instalado. Al final verifica cada herramienta con `command -v` y te dice cuáles quedaron y cuáles faltan.
+
+Qué **no** incluye, y por qué:
+
+- **Metasploit y Armitage:** van aparte, con `sudo bash install-arch.sh --con-blackarch` (ver arriba).
+- **Lo que ya trae el paso 7/7:** nmap, hydra, john, hashcat, aircrack-ng, wireshark-qt, zenmap, tcpdump, tor, torsocks.
+- **ldapdomaindump:** no existe como paquete en Arch, BlackArch ni AUR.
+- **powershell-empire (AUR):** no se instala para no chocar con `empire` de BlackArch, que es el mismo framework.
+- **exiftool, impacket, certipy y zaproxy** van con su nombre real de paquete (`perl-image-exiftool`, `impacket`, `certipy`, `zaproxy`); los otros nombres no existen.
+
+Todo solo para tu propia máquina y tu laboratorio, o un objetivo con permiso.
+
 ## Qué lleva preinstalado
 
 - **Escritorio:** i3, i3status, i3lock, rofi, picom, feh, LightDM
@@ -234,6 +269,7 @@ Para más herramientas de pentest, en Arch existe el repositorio **BlackArch** (
 - **Red / seguridad:** nmap, whois, bind-tools (dig), openbsd-netcat, curl, openssl, python, jq
 - **Seguridad (paso 7/7):** ufw (deny incoming), fail2ban, lynis, arch-audit, clamav, rkhunter, sysctl endurecido, wireshark-qt, zenmap, hydra, john, hashcat, aircrack-ng, tcpdump
 - **Tor:** tor, torsocks, torbrowser-launcher (descarga el Tor Browser oficial), obfs4proxy
+- **Herramientas de Kali (opcional, con el script):** `scripts/instalar-herramientas-kali.sh` instala 94 herramientas de auditoría (44 oficiales, 49 BlackArch, 1 AUR) + linpeas/winpeas. Ver la sección de arriba.
 - **BlackArch (solo con `--con-blackarch`):** metasploit, armitage
 - **Laboratorio:** Server-C clonado en `~/Server-C` (servidor en C, solo 127.0.0.1:4444); ahí dentro, `gcc -Wall -o servidor servidor.c && ./servidor`, y en otra terminal `nc 127.0.0.1 4444`
 
@@ -258,9 +294,10 @@ forgeos-arch/
 │   ├── forgeos-pantallas # dos pantallas: espacio 1 a la pantalla derecha
 │   ├── forgeos-sysinfo   # usuario, uptime, RAM, disco, IP
 │   ├── forgeos-bienvenida # banner + resumen al entrar a i3
-│   ├── forgeos-menu      # menú principal en rofi (v2, Alt+Shift+N)
+│   ├── forgeos-menu      # menú principal en rofi (v2, Alt+Shift+N, 16 entradas)
 │   ├── forgeos-fondo     # fondo animado on/off (v2)
-│   └── forgeos-atajos    # chuleta de atajos en rofi (v2, Alt+Shift+A)
+│   ├── forgeos-atajos    # chuleta de atajos en rofi (v2, Alt+Shift+A)
+│   └── instalar-herramientas-kali.sh  # 94 herramientas de Kali (opcional, con sudo)
 └── tests/test_forgeos_arch.py
 ```
 
